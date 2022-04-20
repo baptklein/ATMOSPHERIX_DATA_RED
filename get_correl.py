@@ -93,10 +93,11 @@ Vsys_lim    = [-15.,15.]
 snrmap_fin  = get_snrmap(np.array(orders)[ind_sel],Kp,Vsys,corr,Kp_lim,Vsys_lim)
 sig_fin     = np.sum(corr[:,:,:]/snrmap_fin,axis=2)
 
-### Get and display statistics
-p_best,K_best,K_sup,K_inf,V_best,V_sup,V_inf = get_statistics(Vsys,Kp,sig_fin)
 
 
+
+
+### Plot correlation + 1D cut
 K_cut   = 120.0
 V_cut   = 0.0
 ind_v   = np.argmin(np.abs(Vsys-V_cut))
@@ -106,16 +107,27 @@ sn_cutx = sn_map[:,ind_v]
 sn_cuty = sn_map[ind_k]
 cmap    = "gist_heat"
 
-
-### Plot correlation + 1D cut
-plot_correlation_map(Vsys,Kp,sn_map,nam_fig,V_cut,K_cut,cmap,[],sn_cuty,20)
-#plot_correlation_map(Vsys,Kp,sn_map,nam_fig,K_cut,V_cut,cmap,sn_cutx,sn_cuty,20)
-
 ### Save data
 savedata = (Vsys,Kp,corr,sn_map)
 with open(nam_res, 'wb') as specfile:
     pickle.dump(savedata,specfile)
 print("DONE")
+
+plot_correlation_map(Vsys,Kp,sn_map,nam_fig,V_cut,K_cut,cmap,[],sn_cuty,20)
+#plot_correlation_map(Vsys,Kp,sn_map,nam_fig,K_cut,V_cut,cmap,sn_cutx,sn_cuty,20)
+
+
+
+
+
+### Get and display statistics
+p_best,K_best,K_sup,K_inf,V_best,V_sup,V_inf = get_statistics(Vsys,Kp,sig_fin)
+
+
+
+
+
+
 
 
 

@@ -198,7 +198,7 @@ print("DATA REDUCTION DONE\n")
 ### Plot final metrics -- RMS per spectrum in each order
 print("PLOT METRICS")
 orders_fin   = np.delete(orders,ind_rem)
-list_ord_fin = np.delete(list_ord,ind_rem)
+list_ord_fin =  np.delete(list_ord,ind_rem)
 nam_fig      = "spectrum_dispersion.png"
 plot_spectrum_dispersion(list_ord_fin,nam_fig)
 print("DONE\n")
