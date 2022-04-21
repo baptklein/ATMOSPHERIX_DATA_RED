@@ -9,6 +9,7 @@ Requirements: Python 3 modules
 - batman: https://lweb.cfa.harvard.edu/~lkreidberg/batman/
 - astropy
 
+If you want to run the nested sampling algorithm, you will also need pymultinest (and necessarily multinest). We refer you to pymultinest documentation: https://johannesbuchner.github.io/PyMultiNest/) 
 
 import numpy as np
 import sys
@@ -46,3 +47,6 @@ import time
   Change parameters in "get_correl.py" and run
   
     $ python get_correl.py
+ 
+ 
+4. The instructions to run the nested sampling are in the multinest_atmo folder. 
