@@ -15,7 +15,7 @@ def make_data(args):
 #       62, 61, 60, 59, 58, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 38, 37,
 #       36, 35, 34, 33, 32, 31]
 
-    pkl = ["../data/test_GL15A.pkl"],
+    pkl = ["test_GL15A.pkl"],
 
     
     lambdas = np.array([[  0.        ,   0.        ],
