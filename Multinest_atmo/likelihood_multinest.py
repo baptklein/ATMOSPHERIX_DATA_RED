@@ -12,7 +12,7 @@ def calc_likelihood(corr,like_type):
         (len(corr["data"]) == len(corr["std"]))
     except:
         raise NameError("data and model not equal")
-    exit()
+        exit()
     
     like = np.zeros(len(corr["data"]))
     
