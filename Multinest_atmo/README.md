@@ -10,3 +10,9 @@ To update the prior, or the other parameters, you have to enter into the code fo
 
 Unfortunately, github does not allow us to put a >25Mb file on the repository so we cannot provide an example pkl file to run the sampler, but it is very easy to create one from our fabulous data reduction code. 
 
+
+
+**SIDENOTE**
+
+If you want to download the test pkl files, you will need the git large file storage software. See the dociumentation here : 
+https://docs.github.com/en/repositories/working-with-files/managing-large-files
