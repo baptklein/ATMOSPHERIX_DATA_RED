@@ -3,7 +3,6 @@
 Created on Sep 2021
 @authors: Baptiste KLEIN, Florian DEBRAS
 """
-
 import numpy as np
 import time
 import matplotlib.pyplot as plt
