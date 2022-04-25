@@ -48,7 +48,7 @@ def parse_cmdline_args():
 
     g.add_argument(
         "--like",
-        choices=["Brogi","Gibson"],
+        choices=["Brogi","Gibson","Gibson_global"],
         required=True,
         help="likelihood to use",
     )
