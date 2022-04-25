@@ -14,5 +14,5 @@ Unfortunately, github does not allow us to put a >25Mb file on the repository so
 
 **SIDENOTE**
 
-If you want to download the test pkl files, you will need the git large file storage software. See the dociumentation here : 
+If you want to download the test pkl files, you will need the git large file storage software. See the documentation here : 
 https://docs.github.com/en/repositories/working-with-files/managing-large-files
