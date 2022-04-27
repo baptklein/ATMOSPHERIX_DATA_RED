@@ -41,6 +41,7 @@ def prepare_to_likelihood(config,model,data,param):
     final_model = []
     final_data = []
     final_std = []
+    final_number = []
     
     for i in range(config["num_transit"]):
         
@@ -56,16 +57,20 @@ def prepare_to_likelihood(config,model,data,param):
         indiv_model= tot_indiv.bin_model()
         indiv_data =[]
         indiv_std = []
+        number = 0
         for j in range(len(data["orders"][i])):
             #print(data["intensity"][i][j][start])
             indiv_data= indiv_data+(data["intensity"][i][j]-np.mean(data["intensity"][i][j],axis=0))[start:end].tolist() #The list format allows not to care about shapes
             indiv_std = indiv_std+(np.asarray([data["std"][i][j]]*(end-start))).tolist() #duplicate Std end-start times
             #print(len(indiv_data))
+            number+=1
         final_model = final_model+indiv_model # concatenate the models to have a list of spectra
         final_data = final_data+indiv_data
         final_std = final_std+indiv_std# same here for the data    
+        final_number.append(number)
     return {
 			"data": final_data,
             "model": final_model,
-            "std" : final_std
+            "std" : final_std,
+            "number" : final_number
         }
