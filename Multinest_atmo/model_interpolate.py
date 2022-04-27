@@ -63,7 +63,7 @@ def prepare_to_likelihood(config,model,data,param):
             indiv_data= indiv_data+(data["intensity"][i][j]-np.mean(data["intensity"][i][j],axis=0))[start:end].tolist() #The list format allows not to care about shapes
             indiv_std = indiv_std+(np.asarray([data["std"][i][j]]*(end-start))).tolist() #duplicate Std end-start times
             #print(len(indiv_data))
-            number+=1
+            number+=end-start
         final_model = final_model+indiv_model # concatenate the models to have a list of spectra
         final_data = final_data+indiv_data
         final_std = final_std+indiv_std# same here for the data    
