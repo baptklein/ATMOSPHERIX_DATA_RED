@@ -14,14 +14,12 @@ def calc_likelihood(corr,like_type):
         raise NameError("data and model not equal")
         exit()
     
-    like = np.zeros(len(corr["data"]))
-    
     
     # plt.plot((corr["model"][0][]))
 
 
     if like_type=="Brogi":
-
+        like = np.zeros(len(corr["data"]))
         for i  in range(len(corr["data"])):
             N = len(corr["data"][i])
             sf  = np.var(corr["data"][i])
@@ -34,7 +32,7 @@ def calc_likelihood(corr,like_type):
     
            
     elif like_type=="Gibson":
-        
+        like = np.zeros(len(corr["data"]))
         for i  in range(len(corr["data"])):
             N = len(corr["data"][i])
             tolog = np.sum((np.array(corr["data"][i])-np.array(corr["model"][i]))**2/np.array(corr["std"][i])**2)/N
@@ -45,16 +43,23 @@ def calc_likelihood(corr,like_type):
         return np.sum(like)
             
     elif like_type == "Gibson_global":
-        Ntot = 0
-        for i  in range(len(corr["data"])):
-            N = len(corr["data"][i])
-            Ntot += N
-            like[i] = np.sum((np.array(corr["data"][i])-np.array(corr["model"][i]))**2/np.array(corr["std"][i])**2)
-            if like[i]<=0.0:
-                print(i)
-                exit()
+        liketot = 0
+        k = 0
+        for j in len(corr["number"]):
+            Ntot = 0
+            like = np.zeros(corr["number"][j])
+            for i  in range(corr["number"][j]):       
+                N = len(corr["data"][k])
+                Ntot += N
+                like[i] = np.sum((np.array(corr["data"][k])-np.array(corr["model"][k]))**2/np.array(corr["std"][k])**2)
+                if like[i]<=0.0:
+                    print(i)
+                    exit()
+                k+=1
+            liketot += -Ntot/2.*(np.log(np.sum(like)/Ntot))
+                
             
-        liketot= -Ntot/2.*(np.log(np.sum(like)/Ntot))
+        
         return liketot        
         
     
