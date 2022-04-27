@@ -45,7 +45,7 @@ def calc_likelihood(corr,like_type):
     elif like_type == "Gibson_global":
         liketot = 0
         k = 0
-        for j in len(corr["number"]):
+        for j in range(len(corr["number"])):
             Ntot = 0
             like = np.zeros(corr["number"][j])
             for i  in range(corr["number"][j]):       
