@@ -43,6 +43,23 @@ def calc_likelihood(corr,like_type):
         return np.sum(like)
             
     elif like_type == "Gibson_global":
+        like = np.zeros(len(corr["data"]))
+        Ntot = 0
+        for i  in range(len(corr["data"])):
+            N = len(corr["data"][i])
+            Ntot += N
+            like[i] = np.sum((np.array(corr["data"][i])-np.array(corr["model"][i]))**2/np.array(corr["std"][i])**2)
+            if like[i]<=0.0:
+                print(i)
+                exit()
+            
+        liketot= -Ntot/2.*(np.log(np.sum(like)/Ntot))
+        return liketot      
+                
+
+
+
+    elif like_type == "Gibson_transit":
         liketot = 0
         k = 0
         for j in range(len(corr["number"])):
