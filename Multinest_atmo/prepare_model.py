@@ -41,6 +41,8 @@ class reduced:
         self.R_s = R_s
 
     def convolve(self,rot_speed,superrot):
+        #although it works really well, we have a mean issue due to the numerical
+        #limits. Be careful with the mean !
 
          R = self.Rp
 

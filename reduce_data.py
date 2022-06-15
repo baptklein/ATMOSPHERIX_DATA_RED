@@ -15,11 +15,11 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition import FastICA
 import time
 from functions import *
-
+import reduce_encoder as encoder
 
 ### Name of the picle file to read the data from
-filename = "Simu_HD189_HITEMP.pkl" 
-nam_fin  = "reduced_data_HITEMP.pkl"
+filename = "/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
+nam_fin  = "/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
 
 
 ### Read data in pickle format
@@ -40,11 +40,10 @@ print("Read data from",filename)
 with open(filename,'rb') as specfile:
     orders,WW,Ir,blaze,Ia,T_obs,phase,window,berv,vstar,airmass,SN = pickle.load(specfile)
 
-
 ### Data reduction parameters
-dep_min  = 0.3       # remove all data when telluric relative absorption > 1 - dep_min
+dep_min  = 0.7      # remove all data when telluric relative absorption > 1 - dep_min
 thres_up = 0.05      # Remove the line until reaching 1-thres_up
-Npt_lim  = 1000       # If the order contains less than Npt_lim points, it is discarded from the analysis
+Npt_lim  = 800      # If the order contains less than Npt_lim points, it is discarded from the analysis
 
 ### Interpolation parameters
 pixel    = np.linspace(-1.13,1.13,11)   ### Sampling a SPIRou pixel in velocity space -- Width ~ 2.28 km/s
@@ -61,8 +60,8 @@ det_airmass = True
 deg_airmass = 2
 
 ### Parameters PCA
-mode_pca    = "pca"                     ### "pca"/"PCA" or "autoencoder"
-npca        = np.array(1*np.ones(len(orders)),dtype=int)      ### Nb of removed components
+mode_pca    = "autoencoder"                     ### "pca"/"PCA" or "autoencoder"
+npca        = np.array(0*np.ones(len(orders)),dtype=int)      ### Nb of removed components
                                         ### Note: Automatic mode to be implemented
 
 
@@ -183,6 +182,8 @@ for nn in range(nord):
                 x_pca_projected = pca.inverse_transform(principalComponents)        
                 O.I_pca = (ff-x_pca_projected)*ist+im
             
+            elif mode_pca == "autoencoder":
+               O.I_pca = encoder.apply_encoder(O.I_fin) 
                 
             ### ESTIMATES FINAL METRICS
             N_px          = 200
