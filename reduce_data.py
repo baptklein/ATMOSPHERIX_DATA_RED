@@ -18,9 +18,10 @@ from functions import *
 import reduce_encoder as encoder
 
 ### Name of the picle file to read the data from
-filename = "/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
-nam_fin  = "/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
+filename = 'data_nopl.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
+nam_fin  = 'reduced_data.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
 
+nam_info = "info.dat" ### Store main info about each order
 
 ### Read data in pickle format
 ### Namely: 
@@ -56,13 +57,13 @@ sig_out  = 5.0                          ### Threshold for outliers identificatio
 deg_px   = 2                            ### Degree of the polynomial fit to the distribution of pixel STDs
 
 ### Parameters for detrending with airmass
-det_airmass = True
+det_airmass = False
 deg_airmass = 2
 
 ### Parameters PCA
-mode_pca    = "autoencoder"                     ### "pca"/"PCA" or "autoencoder"
+mode_pca    = "pca"                     ### "pca"/"PCA" or "autoencoder"
 npca        = np.array(0*np.ones(len(orders)),dtype=int)      ### Nb of removed components
-                                        ### Note: Automatic mode to be implemented
+auto_tune   = True                             ### Automatic tuning of number of components
 
 
     
@@ -91,6 +92,8 @@ V_corr      = vstar - berv                  ### Geo-to-bary correction
 n_ini,n_end = get_transit_dates(window) ### Get transits start and end indices
 c0          = Constants().c0
 t0          = time.time()
+NCF         = np.zeros(nord)
+file        = open(nam_info,"w")
 
 #### Main reduction
 print("START DATA REDUCTION")
@@ -175,12 +178,18 @@ for nn in range(nord):
             ind_rem.append(nn)
         else:
             if mode_pca == "pca" or mode_pca == "PCA":
-                pca   = PCA(n_components=npca[nn])
+            
+                if auto_tune: n_com = O.tune_pca(Nmap=5)
+                else: n_com = npca[nn]            
+            
+                pca   = PCA(n_components=n_com)
                 x_pca = np.float32(ff)
                 pca.fit(x_pca)
                 principalComponents = pca.transform(x_pca)
                 x_pca_projected = pca.inverse_transform(principalComponents)        
                 O.I_pca = (ff-x_pca_projected)*ist+im
+                NCF[nn] = n_com
+                print(n_com,"PCA components discarded")
             
             elif mode_pca == "autoencoder":
                O.I_pca = encoder.apply_encoder(O.I_fin) 
@@ -191,8 +200,10 @@ for nn in range(nord):
             O.SNR_mes     = 1./np.std(O.I_fin[:,indw-N_px:indw+N_px],axis=1) 
             O.SNR_mes_pca = 1./np.std(O.I_pca[:,indw-N_px:indw+N_px],axis=1)        
             
-
+        txt = str(O.number) + "  " + str(len(O.W_fin)) + "  " + str(np.mean(O.SNR)) + "  " + str(np.mean(O.SNR_mes)) + "  " + str(np.mean(O.SNR_mes_pca)) + "  " + str(n_com) + "\n"
+        file.write(txt)
         
+file.close()
 print("DATA REDUCTION DONE\n")        
         
 
