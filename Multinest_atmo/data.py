@@ -5,11 +5,10 @@ import numpy as np
 
 def make_data(args):
     """Make data dictionary for HD 189"""
-    mass_MJ = 1.142
     radius_RJ = 1.138
     gravity_SI = 23.970 
     Rs_Rsun = 0.805   
-    num_transit = 2
+    num_transit =1 
     
     orderstot =[79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63,
        62, 61, 60, 59, 58, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 38, 37,
@@ -149,7 +148,6 @@ def make_data(args):
        [   0.        ,    0.        ],
        [   0.        ,    0.        ]])
     return dict(
-        mass_MJ=mass_MJ,
         radius_RJ=radius_RJ,
 	gravity_SI = gravity_SI,
 	Rs_Rsun = Rs_Rsun,
