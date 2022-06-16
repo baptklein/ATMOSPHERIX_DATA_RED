@@ -20,6 +20,7 @@ import petit_model as model
 import read_data as read_d
 import model_interpolate as interpmod
 import likelihood_multinest as like
+from priors import Priors
 
 # MPI.pickle.__init__(dill.dumps, dill.loads)
 
@@ -48,7 +49,7 @@ def parse_cmdline_args():
 
     g.add_argument(
         "--like",
-        choices=["Brogi","Gibson","Gibson_global"],
+        choices=["Brogi","Gibson","Gibson_global","Gibson_transit"],
         required=True,
         help="likelihood to use",
     )
@@ -72,7 +73,6 @@ config = dict(
     p_minbar = -8.0,
     p_maxbar = 2.0,
     n_pressure = 130,
-    mass_MJ= planet_data["mass_MJ"],
     radius_RJ=planet_data["radius_RJ"],
     Rs_Rsun = planet_data["Rs_Rsun"],
     gravity_SI= planet_data["gravity_SI"],
@@ -108,13 +108,12 @@ theor_spectra = model.Model(config)
 
 
 
-
+pri=Priors()
 def prior(cube, ndim, nparams):
-    cube[0] = cube[0]*300            # uniform Kp 0:300
-    cube[1] = cube[1]*80-40 # Uniform Vsys -40:40
-    cube[2] = (cube[2]*7 - 8) # log-uniform prior between 10^-8 and 10^-1
-    cube[3] = (cube[3]*4000 +200) # uniform between 200 and 4200
-
+    cube[0] = pri.UniformPrior(cube[0], 0, 300)           # uniform Kp 0:300
+    cube[1] =  pri.UniformPrior(cube[1], -40,40)           # un
+    cube[2] =  pri.UniformPrior(cube[2], -8, -1)           # un
+    cube[3] =  pri.GaussianPrior(cube[3], 1400, 300)           # un
 
 def loglike(cube, ndim, nparams):
     Kp, Vsys, H2O,T_eq= cube[0], cube[1], cube[2],cube[3]

@@ -41,13 +41,13 @@ class reduced:
         self.R_s = R_s
 
     def convolve(self,rot_speed,superrot):
+        #although it works really well, we have a mean issue due to the numerical
+        #limits. Be careful with the mean !
 
          R = self.Rp
-         #We need frequency in the convolution, it's easier
-         freq = 299792458.0/(self.Wm*1e-9)
 
-         rot_freq,rot_Rp = conv.rotate(R,freq,rot_speed,superrot)
-         self.Wm = rot_freq
+         rot_wl,rot_Rp = conv.rotate(R,self.Wm,rot_speed,superrot)
+         self.Wm = rot_wl
          self.Rp = rot_Rp
          
     def normalize(self,nf=501):     
