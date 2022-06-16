@@ -1,9 +1,6 @@
 import numpy as np
 import pickle
 
-
-
-
 def return_data(config_dict):
     
 
