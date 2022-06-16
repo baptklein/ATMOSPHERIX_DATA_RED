@@ -24,6 +24,7 @@ import warnings
 import matplotlib.cbook
 warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 from scipy.optimize import minimize
+from sklearn.decomposition import PCA
 
 class Constants:
     def __init__(self):
@@ -724,4 +725,46 @@ class Order:
 
 
 
+    def tune_pca(self,Nmap=5):
+    
+        
+        N_px          = 200
+        n_iter_fit    = 10
+        
+        Il            = np.log(self.I_fin)
+        im            = np.nanmean(Il)
+        ist           = np.nanstd(Il)        
+        ff            = (Il - im)/ist        
+        
+        ### Empirically measure STD of spectra from reduced data
+        indw          = np.argmin(np.abs(self.W_fin-self.W_fin.mean())) 
+        std_mes       = np.std(ff[:,indw-N_px:indw+N_px],axis=1)
+        
+        ### Estimate blaze function from fit to STD in the wavelength space
+        WW            = self.W_fin - self.W_mean
+        std_px        = np.std(ff,axis=0)
+        std_in        = np.dot(std_mes.reshape((len(ff),1)),np.ones((1,len(self.W_fin))))
+        model,filt    = poly_fit(WW,std_px,2,5,n_iter_fit)
+        ampl          = model(WW)/np.min(model(WW))
+        
+        thres         = np.zeros(Nmap)
+        for ii in range(Nmap):
+            ### Create noise map matching data coordinates and ampl. by blaze        
+            NN    = np.random.normal(0.0,std_in*ampl)
+            NN   -= NN.mean()
+            NN   /= NN.std()
+            
+            ### Apply PCA to noise map and store highest explained variance
+            pca   = PCA(n_components=len(NN))
+            pca.fit(np.float32(NN))
+            var       = pca.explained_variance_ratio_         
+            thres[ii] = np.max(var)
+    
+    
+        pca   = PCA(n_components=len(NN))
+        x_pca = np.float32(ff)
+        pca.fit(x_pca)       
+        var   = pca.explained_variance_ratio_ 
+        ncf   = len(np.where(var>np.max(thres))[0])
+        return ncf
 
