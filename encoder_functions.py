@@ -31,33 +31,49 @@ class AE(nn.Module):
 # Here the latent representation will be of dimension 5
     def __init__(self, **kwargs):
         super().__init__()
-        self.encoder_hidden_layer_1 = nn.Linear(kwargs['length'],1022)
+        # self.encoder_hidden_layer_1 = nn.Linear(kwargs['length'],1022)
 
-        self.encoder_hidden_layer_2 = nn.Linear(1022,511)
+        # self.encoder_hidden_layer_2 = nn.Linear(1022,511)
 
-        self.encoder_hidden_layer_3 = nn.Linear(511,256)
+        # self.encoder_hidden_layer_3 = nn.Linear(511,256)
 
-        self.encoder_hidden_layer_4 = nn.Linear(256,128)
+        # self.encoder_hidden_layer_4 = nn.Linear(256,128)
 
-        self.encoder_hidden_layer_5 = nn.Linear(128,32)
+        # self.encoder_hidden_layer_5 = nn.Linear(128,32)
 
-        self.encoder_hidden_layer_6 = nn.Linear(32,16)
+        # self.encoder_hidden_layer_6 = nn.Linear(32,16)
 
-        self.encoder_output_layer = nn.Linear(16,5)
+        # self.encoder_output_layer = nn.Linear(16,5)
 
-        self.decoder_hidden_layer_1 = nn.Linear(5,16)
+        # self.decoder_hidden_layer_1 = nn.Linear(5,16)
 
-        self.decoder_hidden_layer_2 = nn.Linear(16,32)
+        # self.decoder_hidden_layer_2 = nn.Linear(16,32)
 
-        self.decoder_hidden_layer_3 = nn.Linear(32,128)
+        # self.decoder_hidden_layer_3 = nn.Linear(32,128)
 
-        self.decoder_hidden_layer_4 = nn.Linear(128, 256)
+        # self.decoder_hidden_layer_4 = nn.Linear(128, 256)
 
-        self.decoder_hidden_layer_5 = nn.Linear(256, 511)
+        # self.decoder_hidden_layer_5 = nn.Linear(256, 511)
 
-        self.decoder_hidden_layer_6 = nn.Linear(511, 1022)
+        # self.decoder_hidden_layer_6 = nn.Linear(511, 1022)
 
-        self.decoder_output_layer = nn.Linear(1022,kwargs['length'])
+        # self.decoder_output_layer = nn.Linear(1022,kwargs['length'])
+        
+        self.encoder_hidden_layer_1 = nn.Linear(kwargs['length'],800)
+
+        self.encoder_hidden_layer_2 = nn.Linear(800,200)
+
+        self.encoder_hidden_layer_3 = nn.Linear(200,40)
+
+        self.encoder_output_layer = nn.Linear(40,8)
+
+        self.decoder_hidden_layer_1 = nn.Linear(8,40)
+
+        self.decoder_hidden_layer_2 = nn.Linear(40,200)
+
+        self.decoder_hidden_layer_3 = nn.Linear(200,800)
+
+        self.decoder_output_layer = nn.Linear(800,kwargs['length'])
         
         self.activation = nn.PReLU()
 
@@ -71,14 +87,14 @@ class AE(nn.Module):
         activation = self.encoder_hidden_layer_3(activation)
         activation = self.activation(activation)
         
-        activation = self.encoder_hidden_layer_4(activation)
-        activation = self.activation(activation)
+        # activation = self.encoder_hidden_layer_4(activation)
+        # activation = self.activation(activation)
         
-        activation = self.encoder_hidden_layer_5(activation)
-        activation = self.activation(activation)
+        # activation = self.encoder_hidden_layer_5(activation)
+        # activation = self.activation(activation)
         
-        activation = self.encoder_hidden_layer_6(activation)
-        activation = self.activation(activation)
+        # activation = self.encoder_hidden_layer_6(activation)
+        # activation = self.activation(activation)
 
         code = self.encoder_output_layer(activation)
         code = self.activation(code)
@@ -92,14 +108,14 @@ class AE(nn.Module):
         activation = self.decoder_hidden_layer_3(activation)
         activation = self.activation(activation)
         
-        activation = self.decoder_hidden_layer_4(activation)
-        activation = self.activation(activation)
+        # activation = self.decoder_hidden_layer_4(activation)
+        # activation = self.activation(activation)
         
-        activation = self.decoder_hidden_layer_5(activation)
-        activation = self.activation(activation)
+        # activation = self.decoder_hidden_layer_5(activation)
+        # activation = self.activation(activation)
         
-        activation = self.decoder_hidden_layer_6(activation)
-        activation = self.activation(activation)
+        # activation = self.decoder_hidden_layer_6(activation)
+        # activation = self.activation(activation)
         
         activation = self.decoder_output_layer(activation)
         reconstructed = self.activation(activation)
