@@ -27,35 +27,15 @@ def apply_encoder(flux):
     
     # #The data are supposed to be airmass corrected and bad pixels filtered. For one order an associated wavelength and time array is recommended for meaningful plots.
     # #The flux is switched in the log space.
-    # flux = flux+1#+1 because it happened to have a problem with the log once or twice
-    # flux = np.log(flux)
-    # im = np.nanmean(flux)
-    # ist = np.nanstd(flux)
-    # flux = (flux - im)/ist
-    
-    # train_x, train_y, test_x, test_y = get_training_and_test_sets(flux)
 
-    # model = AE(length=len(train_x[0]))
-    
-    # ##### /!\ To be able to use CUDA and have a feasible computation time you need access to a GPU
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    # train_x = train_x.to(device)
-    # train_y = train_y.to(device)
-    # test_x = test_x.to(device)
-    # test_y = test_y.to(device)
-    
-    # model, train_loss, test_loss = train_model(train_x, train_y, test_x, test_y)
-    # train_loss = [x.detach().cpu().numpy() for x in train_loss]
-    # test_loss = [y for y in test_loss]
-    
-    flux = flux+1.0
+    flux = flux+1.0  #to avoid log issues
 
     flux = np.log(flux)
     im = np.nanmean(flux)
     ist = np.nanstd(flux)
     flux = (flux - im)/ist
     
+    # ##### /!\ To be able to use CUDA and have a feasible computation time you need access to a GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
     
     
