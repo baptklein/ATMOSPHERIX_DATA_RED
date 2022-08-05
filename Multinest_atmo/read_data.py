@@ -11,10 +11,11 @@ def return_data(config_dict):
     std_data = []
     phase_data = []
     window_data = []
+    proj_data = []
     V_star = []
     for j in range(config_dict["num_transit"]):
         with open(config_dict["pkl"][j][0],'rb') as ccfile:
-            orders,Wmean,V,I,Std,phase,window,Vtot = pickle.load(ccfile)
+            orders,Wmean,V,I,Std,phase,window,Vtot,proj = pickle.load(ccfile)
         orders_data.append(orders)
         wmean_data.append(Wmean)
         V_data.append(V)# same here for the data   
@@ -23,6 +24,7 @@ def return_data(config_dict):
         phase_data.append(phase)
         window_data.append(window)
         V_star.append(Vtot)
+        proj_data.append(proj)
         
 
  #final_data and final std contain num_transit arrays of size norders*nphase.
@@ -40,6 +42,7 @@ def return_data(config_dict):
             "std" : std_data,
             "phase" : phase_data,
             "window" : window_data,
-            "Vstar" : V_star
+            "Vstar" : V_star,
+            "proj" : proj_data
 
         }

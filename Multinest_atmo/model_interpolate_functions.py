@@ -64,7 +64,7 @@ class total_model:
     """
 
     
-    def __init__(self,Kp,Vsys,models,orders,Wmean,V,phase,window,Vstar,ddv):
+    def __init__(self,Kp,Vsys,models,orders,Wmean,V,phase,window,Vstar,ddv,proj = []):
         
         
         self.orders = orders
@@ -76,6 +76,8 @@ class total_model:
         self.V = V
         self.Vstar = Vstar
 
+        
+        self.proj = proj
         
         self.Kp  = Kp  ## Values of semi-amplitude of the planet orbit for parameter search (1D vector)
         self.Vsys = Vsys   ## Values of radial velocity at mid-transit for parameter search (1D vector)
@@ -120,18 +122,21 @@ class total_model:
         num_spectra = len(self.window)
         
         data_ret = []
-        model_ret = []  ### Init binned sequence of spectra
+        model_tot = []  ### Init binned sequence of spectra
         std_ret  = []
         c0      = 29979245800.0e-5
         #for i in range(len(self.orders)):
             #print(self.models[i].nord)
 
-
+        
         for i in range(len(self.orders)):
+            mask = []
             V_data =  self.V[i]
+            #total shape of the model
+            model_ret = np.zeros((num_spectra,len(V_data)))
             for n in range(num_spectra):
-
                 if (self.window[n] > 0.2):
+                    mask.append(n)
                     I_tmp= np.zeros(len(V_data))
                     data_tmp = np.zeros(len(V_data))
     
@@ -143,10 +148,21 @@ class total_model:
                         I_tmp += self.models[i].Fm(((V_data+dd-DVP[n])/c0+1.0)*self.Wmean[i])*self.window[n] 
                     I_tmp = I_tmp/len(self.ddv)### Average values to be closer to measured values
                     I_tmp -= np.mean(I_tmp)
-                    model_ret.append(I_tmp)
-                    
+                    model_ret[n] = I_tmp
+                else:
+                    model_ret[n] = np.zeros(len(V_data))
+            mean_to_keep = np.mean(model_ret,axis=1)
+            model_ret = (model_ret.T-mean_to_keep).T
+            Il    = np.log(model_ret+1.0)
+            im    = np.nanmean(Il)
+            ist   = np.nanstd(Il)        
+            ff    = (Il - im)/ist
+            model_ret= np.exp((ff-np.matmul(self.proj[i],ff))*ist+im)-1.0
+            model_ret = (model_ret.T+mean_to_keep).T
+            mask = np.array(mask)
+            model_tot = model_tot+(model_ret[mask].tolist())
         # np.savetxt("lol.txt",I_ret)
-        return model_ret ### Binned modelled sequence shifted at (kp,v0)
+        return model_tot ### Binned modelled sequence shifted at (kp,v0)
 
 
         # 

@@ -46,19 +46,18 @@ def wavelength_to_speed(W,Vc,berv,nobs):
 
 c0          = 299792.458 
 
-REP_DATA = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/reduced/pkl/double/"
-filename = "Simu_HD189_EXOMOL_2.pkl"
+REP_DATA = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/HD189/reduced/"
+filename = "Simu_2_HD189_onlyH2O-VMR3-T900_rotated3000-goodmean_proj-autoPCA-2.pkl"
 
+dir_res = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/HD189/toMCMC/"
+name_fin = "Simu_2_HD189_onlyH2O-VMR3-T900_rotated3000-goodmean_proj-autoPCA-2_MCMC.pkl"
 
-dir_res = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/to_mcmc/pkl/double/PCA1/"
-name_fin = "test_GL15A_2.pkl"
 
 with open(REP_DATA+filename,'rb') as ccfile:
-    orders,W_data,I_data,T_obs,phase,window,berv,Vc,airmass,SN = pickle.load(ccfile)
+    orders,W_data,I_data,T_obs,phase,window,berv,Vc,airmass,SN, proj = pickle.load(ccfile)
 
 
 lambdas = np.zeros((2,130))
-orders = np.array([79,78])
 
 V_data = []
 Std_tot = []
@@ -83,7 +82,7 @@ for k in range(len(orders)):
 #    Std_tot.append(Stdfit(V_corr))
     
     
-savedata = (orders,Wmean_tot,V_data,I_data,Std_tot,phase,window,Vstar,)
+savedata = (orders,Wmean_tot,V_data,I_data,Std_tot,phase,window,Vstar,proj)
 with open(dir_res+name_fin, 'wb') as specfile:
     pickle.dump(savedata,specfile)    
     

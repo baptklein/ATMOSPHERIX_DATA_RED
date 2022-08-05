@@ -11,15 +11,22 @@ import os
 import matplotlib.pyplot as plt
 import pickle
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
 from sklearn.decomposition import FastICA
+
+from wpca import PCA, WPCA, EMPCA
+
 import time
 from functions import *
 import reduce_encoder as encoder
 
 ### Name of the picle file to read the data from
-filename = 'data_nopl.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
-nam_fin  = 'reduced_data.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
+filename = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/HD189/Simulated/Simu_2_HD189_onlyH2O-VMR3-T900_rotated3000-goodmean.pkl"
+nam_fin  = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/HD189/reduced/Simu_2_HD189_onlyH2O-VMR3-T900_rotated3000-goodmean_proj-autoPCA-2.pkl"
+
+
+# filename = "/home/florian/Bureau/Atmosphere_SPIRou/ATMOSPHERIX_DATA_RED/Data_Simulator/Simu_2_HD189_onlyH2O-VMR3-T900_just52_nostar.pkl"
+# nam_fin = "/home/florian/Bureau/Atmosphere_SPIRou/ATMOSPHERIX_DATA_RED/Data_Simulator/prout.pkl"
+
 
 nam_info = "info.dat" ### Store main info about each order
 
@@ -42,7 +49,7 @@ with open(filename,'rb') as specfile:
     orders,WW,Ir,blaze,Ia,T_obs,phase,window,berv,vstar,airmass,SN = pickle.load(specfile)
 
 ### Data reduction parameters
-dep_min  = 0.7      # remove all data when telluric relative absorption > 1 - dep_min
+dep_min  = 0.7    # remove all data when telluric relative absorption > 1 - dep_min
 thres_up = 0.05      # Remove the line until reaching 1-thres_up
 Npt_lim  = 800      # If the order contains less than Npt_lim points, it is discarded from the analysis
 
@@ -61,9 +68,9 @@ det_airmass = False
 deg_airmass = 2
 
 ### Parameters PCA
-mode_pca    = "pca"                     ### "pca"/"PCA" or "autoencoder"
-npca        = np.array(0*np.ones(len(orders)),dtype=int)      ### Nb of removed components
-auto_tune   = True                             ### Automatic tuning of number of components
+mode_pca    = "PCA"                     ### "pca"/"PCA" or "autoencoder"
+npca        = np.array(1*np.ones(len(orders)),dtype=int)      ### Nb of removed components
+auto_tune   = True                  ### Automatic tuning of number of components
 
 
     
@@ -145,10 +152,9 @@ for nn in range(nord):
         ### STEP 2 -- NORMALISATION AND OUTLIER REMOVAL
         W_norm1,I_norm1 = O.normalize(W_sub,I_sub,N_med,sig_out,1,N_bor)
         ### Correct for bad pixels
-        W_norm2,I_norm2 = O.filter_pixel(W_norm1,I_norm1,deg_px,sig_out)
+        W_norm2,I_norm2= O.filter_pixel(W_norm1,I_norm1,deg_px,sig_out)
         ### END of STEP 2    
-        
-        
+
         ### STEP 3 -- DETREND WITH AIRMASS -- OPTIONAL
         if det_airmass:
             I_log           = np.log(I_norm1)
@@ -167,7 +173,7 @@ for nn in range(nord):
         
         
         ### STEP 4 -- REMOVING CORRELATED NOISE -- PCA/AUTOENCODERS
-        Il    = np.log(O.I_fin)
+        Il    = np.log(O.I_fin+1.0)
         im    = np.nanmean(Il)
         ist   = np.nanstd(Il)        
         ff    = (Il - im)/ist
@@ -180,17 +186,42 @@ for nn in range(nord):
             if mode_pca == "pca" or mode_pca == "PCA":
             
                 if auto_tune: n_com = O.tune_pca(Nmap=5)
-                else: n_com = npca[nn]            
-            
-                pca   = PCA(n_components=n_com)
-                x_pca = np.float32(ff)
-                pca.fit(x_pca)
-                principalComponents = pca.transform(x_pca)
-                x_pca_projected = pca.inverse_transform(principalComponents)        
-                O.I_pca = (ff-x_pca_projected)*ist+im
-                NCF[nn] = n_com
-                print(n_com,"PCA components discarded")
-            
+                else: n_com = npca[nn]       
+                
+                if n_com > 0:
+                    #weighted PCA with the weight being the variance of the pixels
+                    #Uncomment the next 5 lines for weighted PCA
+                    weight = np.std(ff,axis=0)
+                    weight = weight*np.ones_like(ff)
+                    pca   = WPCA(n_components=n_com)
+                    x_pca = np.float32(ff)
+                    pca.fit(x_pca,weights=weight)
+                    
+                    #uncomment the next three lines for normal PCA
+                    # pca   = PCA(n_components=n_com)
+                    # x_pca = np.float32(ff)
+                    # pca.fit(x_pca)                    
+                    
+                    
+                    principalComponents = pca.transform(x_pca)
+                    x_pca_projected = pca.inverse_transform(principalComponents)        
+                    O.I_pca = np.exp((ff-x_pca_projected)*ist+im)-1.0
+                    NCF[nn] = n_com
+                    print(n_com,"PCA components discarded")
+                    txt = str(O.number) + "  " + str(len(O.W_fin)) + "  " + str(np.mean(O.SNR)) + "  " + str(np.mean(O.SNR_mes)) + "  " + str(np.mean(O.SNR_mes_pca)) + "  " + str(n_com) + "\n"
+                    file.write(txt)
+                    
+                    #For Gibson2021
+                    try:
+                        inver = np.linalg.pinv(principalComponents)
+                        O.proj = np.matmul(principalComponents,inver)
+                    except:
+                        O.proj = np.zeros((len(ff),len(ff)))
+                else:
+                    print("O PCA components discarded")
+                    O.I_pca = O.I_fin
+                    O.proj = np.zeros((len(ff),len(ff)))
+                    
             elif mode_pca == "autoencoder":
                O.I_pca = encoder.apply_encoder(O.I_fin) 
                 
@@ -200,8 +231,7 @@ for nn in range(nord):
             O.SNR_mes     = 1./np.std(O.I_fin[:,indw-N_px:indw+N_px],axis=1) 
             O.SNR_mes_pca = 1./np.std(O.I_pca[:,indw-N_px:indw+N_px],axis=1)        
             
-        txt = str(O.number) + "  " + str(len(O.W_fin)) + "  " + str(np.mean(O.SNR)) + "  " + str(np.mean(O.SNR_mes)) + "  " + str(np.mean(O.SNR_mes_pca)) + "  " + str(n_com) + "\n"
-        file.write(txt)
+
         
 file.close()
 print("DATA REDUCTION DONE\n")        
@@ -217,13 +247,15 @@ print("DONE\n")
 
 ### Save data for correlation
 print("\nData saved in",nam_fin)
-Ir  = []
+Iend  = []
 WW  = []
+projtot = []
 for nn in range(len(orders_fin)):
     O  = list_ord_fin[nn]
     WW.append(O.W_fin)
-    Ir.append(O.I_pca)
-savedata = (orders_fin,WW,Ir,T_obs,phase,window,berv,vstar,airmass,SN)
+    Iend.append(O.I_pca)
+    projtot.append(O.proj)
+savedata = (orders_fin,WW,Iend,T_obs,phase,window,berv,vstar,airmass,SN,projtot)
 with open(nam_fin, 'wb') as specfile:
     pickle.dump(savedata,specfile)
 print("DONE")
