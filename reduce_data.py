@@ -17,18 +17,23 @@ from wpca import PCA, WPCA, EMPCA
 
 import time
 from functions import *
+from plots import *
 import reduce_encoder as encoder
 
+
 ### Name of the picle file to read the data from
-filename = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/HD189/Simulated/Simu_2_HD189_onlyH2O-VMR3-T900_rotated3000-goodmean.pkl"
-nam_fin  = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/HD189/reduced/Simu_2_HD189_onlyH2O-VMR3-T900_rotated3000-goodmean_proj-autoPCA-2.pkl"
 
-
-# filename = "/home/florian/Bureau/Atmosphere_SPIRou/ATMOSPHERIX_DATA_RED/Data_Simulator/Simu_2_HD189_onlyH2O-VMR3-T900_just52_nostar.pkl"
-# nam_fin = "/home/florian/Bureau/Atmosphere_SPIRou/ATMOSPHERIX_DATA_RED/Data_Simulator/prout.pkl"
-
+filename = 'data_nopl.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
+nam_fin  = 'reduced_data.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
 
 nam_info = "info.dat" ### Store main info about each order
+
+### Correction of stellar contamination
+### Only used if synthetic spectrum available
+corr_star  = False
+WC_name    = ""            ### Input wavelength for synthetic stellar spectra
+IC_name    = ""            ### Input flux for synthetic stellar spectra
+
 
 ### Read data in pickle format
 ### Namely: 
@@ -72,8 +77,10 @@ mode_pca    = "PCA"                     ### "pca"/"PCA" or "autoencoder"
 npca        = np.array(1*np.ones(len(orders)),dtype=int)      ### Nb of removed components
 auto_tune   = True                  ### Automatic tuning of number of components
 
-
-    
+### Plot info
+plot_red    = True
+numb        = 47
+nam_fig     = "reduc_" + str(numb) + "_jun19.png"
     
     
 ### Create order objects
@@ -121,9 +128,25 @@ for nn in range(nord):
         print(len(O.W_raw)-len(W_cl),"pts removed from order",O.number,"(",O.W_mean,"nm) -- OK")
         
         
+        V_cl      = c0*(W_cl/O.W_mean-1.)       
+        ### Correction of stellar contamination (RM and center-to-limb variations)
+        if corr_star:
+            IS_corr = np.load(IC_name)
+            WS_corr = np.load(WC_name)
+            VS_corr = c0*(WS_corr/O.W_mean-1.)  
+            
+            if (WS_corr.min()>=W_cl.max()) or (WS_corr.max()<=W_cl.min()):
+                print("No stellar correction available for order:",O.number) 
+            else:
+                cov = 100.*(WS_corr.max() - WS_corr.min())/(W_cl.max()-W_cl.min())
+                print("STELLAR CORRECTION: [",WS_corr.min(),",",WS_corr.max(),"]")
+                print("Order wavelengths: [",W_cl.min(),",",W_cl.max(),"] - Coverage:",round(cov,1),"%")
+                If   = correct_star(V_cl,I_cl,VS_corr,IS_corr,V_corr,A_cl,thres_up,sig_g)
+                I_cl = np.copy(If)
+                
+        
         ### If the order is kept - Remove high-SNR out-of-transit reference spectrum    
         ### Start by computing mean spectrum in the stellar rest frame
-        V_cl      = c0*(W_cl/O.W_mean-1.)
         I_bary    = move_spec(V_cl,I_cl,V_corr,pixel,kind)  ## Shift to stellar rest frame      
         I_med     = np.median(np.concatenate((I_bary[:n_ini],I_bary[n_end:]),axis=0),axis=0) ## Compute median out-of-transit        
         I_med_geo = move_spec(V_cl,np.array([I_med]),-1.*V_corr,pixel,kind)  ## Move back ref spectrum to Geocentric frame
@@ -221,7 +244,7 @@ for nn in range(nord):
                     print("O PCA components discarded")
                     O.I_pca = O.I_fin
                     O.proj = np.zeros((len(ff),len(ff)))
-                    
+
             elif mode_pca == "autoencoder":
                O.I_pca = encoder.apply_encoder(O.I_fin) 
                 
@@ -232,6 +255,12 @@ for nn in range(nord):
             O.SNR_mes_pca = 1./np.std(O.I_pca[:,indw-N_px:indw+N_px],axis=1)        
             
 
+        
+        if plot_red == True and O.number == numb:
+            print("Plot data reduction steps")
+            lab = ["Step 1","Step 2","Step 3","Step 4"]
+            plot_reduction(phase,W_cl,I_sub2,W_norm1,I_norm1,O.W_fin,O.I_fin,O.W_fin,O.I_pca,lab,nam_fig)        
+        
         
 file.close()
 print("DATA REDUCTION DONE\n")        
