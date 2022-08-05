@@ -102,6 +102,70 @@ def read_data_spirou(repp,list_ord,nord):
     
     
 # -----------------------------------------------------------
+# This function corrects for Rossiter-Maclaughlin and center-
+# to-limb variations in the stellar line profiles. For the 
+# relevant wavelength ranges, the function takes a synthetic
+# spectrum in which the relevant planet-induced perturbations
+# have been corrected, and correct for these effects by normali-
+# sing the observed spectra by the synthetic user-provided spec.
+# -----------------------------------------------------------
+def correct_star(V_obs,I_obs,VS_corr,IS_corr,V_shift,I_atm,thres_tel=0.03,sig_g=1.13):
+    """
+    --> Inputs:     - V_obs:     Velocity vector of the observed spectra [km/s]
+                    - I_obs:     Observed spectra (2D matrix)
+                    - VS_corr:   Velocity vector of the synthetic spectra (1D)
+                    - IS_corr:   Synthetic spectra used to correct the observed ones (2D matrix)
+                    - V_shift:   Geocentric to barycentric RV correction [km/s]
+                    - I_atm:     Normalised telluric spectrum
+                    - thres_tel: Threshold under which stellar lines are regarded as telluric-free
+                    - sig_g:     STD of SPIRou instrumental profile [km/s]
+
+
+    --> Outputs:    - If:        Sequence of spectra corrected from IS_corr
+    """
+    
+    dddv    = np.linspace(-3.*sig_g,3.*sig_g,30)
+    G       = normal_law(dddv,0.0,sig_g)
+    step    = dddv[1]-dddv[0]
+    If      = np.copy(I_obs)
+    for uu in range(len(I_obs)):
+    
+        ### Select only relevant parts for the correction
+        iss   = np.where((V_obs>=VS_corr.min())&(V_obs<=VS_corr.max()))[0]
+        vv    = V_obs[iss]
+        ii    = I_obs[uu,iss]
+        aa    = I_atm[uu,iss]    
+
+        ### Select only the lines with negligible telluric absorption
+        it    = np.where(aa>1-thres_tel)[0]
+        V_sel = vv[it]
+        I_sel = ii[it]        
+
+        ### Shift synthetic spectra in Geocentric frame
+        fi       = interp1d(VS_corr,IS_corr[uu],kind="cubic",fill_value="extrapolate")
+        Icg      = step * (fi(V_sel-V_shift[uu]+dddv[0])*G[0]+fi(V_sel-V_shift[uu]+dddv[-1])*G[-1]) * 0.5
+        for hh in range(1,len(dddv)-1):
+            Icg += step*fi(V_sel-V_shift[uu]+dddv[hh])*G[hh]  
+        
+        ### Linear fit of the model to the data
+        idd        = np.where(Icg<np.median(Icg)-0.5*np.std(Icg))  ## Fit the lines only
+        X          = np.array([np.ones(len(V_sel))[idd],Icg[idd]],dtype=float).T
+        p,pe       = LS(X,I_sel[idd])
+        
+        
+        ### Shift full synthetic spectra and correct for it
+        Icf      = step * (fi(vv-V_shift[uu]+dddv[0])*G[0]+fi(vv-V_shift[uu]+dddv[-1])*G[-1]) * 0.5
+        for hh in range(1,len(dddv)-1):
+            Icf += step*fi(vv-V_shift[uu]+dddv[hh])*G[hh]  
+        Xc          = np.array([np.ones(len(vv)),Icf],dtype=float).T
+        Ip          = np.dot(Xc,p) 
+        If[uu,iss] /= Ip        
+        
+    return If
+
+
+    
+# -----------------------------------------------------------
 # Get transit window -- requires batman python module
 # Uncomment lines below to use batman module to compute transit flux
 # See information in https://lweb.cfa.harvard.edu/~lkreidberg/batman/
@@ -375,68 +439,7 @@ def make_pca(I,N_comp_pca,return_all=False):
     else: return e_var,I_pca
 
 
-# -----------------------------------------------------------
-# Compare the dispersion at the center of each spectrum (in 
-# each order) to the photon noise provided by the SPIRou DRS
-# -----------------------------------------------------------
-def plot_spectrum_dispersion(lord,nam_fig):
 
-    """
-    --> Inputs:     - lord: list of Order objects
-
-    --> Outputs:    - Plot displayed
-
-     """
-
-    # Initialization
-    rms_sp     = np.zeros(len(lord))
-    rms_sp_s   = np.zeros(len(lord))
-    rms_drs    = np.zeros(len(lord))
-    rms_drs_s  = np.zeros(len(lord))
-    rms_pca    = np.zeros(len(lord))
-    rms_pca_s  = np.zeros(len(lord))    
-    wmean      = np.zeros(len(lord))
-    LO         = np.zeros(len(lord),dtype=int)
-
-    for kk in range(len(lord)):
-        O              = lord[kk]
-        disp_mes       = 1./O.SNR_mes
-        disp_drs       = 1./O.SNR
-        disp_pca       = 1./O.SNR_mes_pca
-        rms_sp[kk]     = np.mean(disp_mes)
-        rms_sp_s[kk]   = np.std(disp_mes)
-        rms_drs[kk]    = np.mean(disp_drs)
-        rms_drs_s[kk]  = np.std(disp_drs)
-        rms_pca[kk]    = np.mean(disp_pca)
-        rms_pca_s[kk]  = np.std(disp_pca)
-        wmean[kk]      = O.W_mean
-        LO[kk]         = O.number
-
-    # Compute wavelength-order number correspondance
-    WW,LO_pred,LO_predt = fit_order_wave(LO,wmean)
-    plt.figure(figsize=(12,5))
-    ax = plt.subplot(111)
-    ax.errorbar(LO,rms_sp,rms_sp_s,fmt="*",color="k",label="Reduced data",capsize=10.0,ms=10.)
-    ax.errorbar(LO,rms_pca,rms_pca_s,fmt="^",color="g",label="After PCA",capsize=10.0,ms=7.5)
-    ax.errorbar(LO,rms_drs,rms_drs_s,fmt="o",color="m",label="DRS",capsize=8.0)
-    
-    ax.legend(ncol=2)
-    ax2 = ax.twiny()
-    ax2.set_xticks(LO_pred)
-    ax2.set_xlabel("Wavelength [nm]")
-    ax2.set_xticklabels(WW)
-    ax2.xaxis.set_minor_locator(ticker.FixedLocator(LO_predt))
-    ax.set_xlim(30,80)
-    ax2.set_xlim(30,80)
-    ax.xaxis.set_minor_locator(MultipleLocator(1))
-    ax.set_ylabel("Spectrum dispersion")
-    ax.set_xlabel("Order number")
-    ax.set_yscale("log")
-    plt.subplots_adjust(wspace=0.5,hspace = 0.)
-    plt.savefig(nam_fig,bbox_inches="tight")
-    plt.close()
-    
-    
     
 #### Main class -- Order
     
@@ -724,46 +727,70 @@ class Order:
         return W[ind_px],I[:,ind_px]
 
 
+
+    # -----------------------------------------------------------
+    # Automatically tune the number of PCA components removed:
+    # Generate sequence of spectra containing only white noise
+    # amplified by the blaze function. Apply PCA to Nmap white 
+    # noise maps and store the highest eigenvalue. The components
+    # to remove are those whose eigenvalue is larger than a threshold
+    # computed from the largest eigenvalues of the noise maps.
+    # -----------------------------------------------------------
+
     def tune_pca(self,Nmap=5):
-    
+
+        """
+        --> Inputs:     - Order object
+                        - Nmap:    Number of white noise map used to compute the threshold 
+
+        --> Outputs:    - ncf:     Number of PCA components to remove
+        """    
+
+        N_px          = 200    ### Half nb of px used to compute the dispersion for each pixel
+        n_iter_fit    = 10     ### Number of iterations for the polynomial fit to the px std
         
-        N_px          = 200
-        n_iter_fit    = 10
-        
-        Il            = np.log(self.I_fin)
+        ### Initialisation:
+        Il            = self.I_fin
         im            = np.nanmean(Il)
         ist           = np.nanstd(Il)        
         ff            = (Il - im)/ist        
         
-        ### Empirically measure STD of spectra from reduced data
+        ### Determinate S/N at the center of the order for each epoch
         indw          = np.argmin(np.abs(self.W_fin-self.W_fin.mean())) 
         std_mes       = np.std(ff[:,indw-N_px:indw+N_px],axis=1)
         
-        ### Estimate blaze function from fit to STD in the wavelength space
+        ### Determine the blaze amplification function (border of the order)
         WW            = self.W_fin - self.W_mean
         std_px        = np.std(ff,axis=0)
         std_in        = np.dot(std_mes.reshape((len(ff),1)),np.ones((1,len(self.W_fin))))
         model,filt    = poly_fit(WW,std_px,2,5,n_iter_fit)
         ampl          = model(WW)/np.min(model(WW))
         
-        thres         = np.zeros(Nmap)
-        for ii in range(Nmap):
-            ### Create noise map matching data coordinates and ampl. by blaze        
+        ### Generate noise maps, amplify them, and apply PCA
+        thres         = np.zeros(Nmap) ### Store highest eigenvalue for each noise map
+        for ii in range(Nmap):        
+            ### Generate noise map
             NN    = np.random.normal(0.0,std_in*ampl)
             NN   -= NN.mean()
             NN   /= NN.std()
             
-            ### Apply PCA to noise map and store highest explained variance
+            ### Apply PCA
             pca   = PCA(n_components=len(NN))
             pca.fit(np.float32(NN))
-            var       = pca.explained_variance_ratio_         
+            var       = pca.explained_variance_ratio_    
+            
+            ###Store highest eigenvalue     
             thres[ii] = np.max(var)
     
-    
+        ### Apply PCA to observed data
         pca   = PCA(n_components=len(NN))
         x_pca = np.float32(ff)
         pca.fit(x_pca)       
         var   = pca.explained_variance_ratio_ 
-        ncf   = len(np.where(var>2.0*np.max(thres))[0])
-        return ncf
 
+        ### Nb of components: larger than 2*max highenvalue
+
+        ncf   = len(np.where(var>2.0*np.max(thres))[0])
+
+        return ncf
+        
