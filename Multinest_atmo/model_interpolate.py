@@ -52,7 +52,7 @@ def prepare_to_likelihood(config,model,data,param):
         tot_indiv = modfunc.total_model(param["Kp"],param["Vsys"],mod_2D,
                                         data["orders"][i],
                                         data["wmean"][i],
-                                        data["V"][i],data["phase"][i],data["window"][i],data["Vstar"][i],ddv)
+                                        data["V"][i],data["phase"][i],data["window"][i],data["Vstar"][i],ddv,data["proj"][i])
         tot_indiv.fill_model()
         indiv_model= tot_indiv.bin_model()
         indiv_data =[]

@@ -724,7 +724,6 @@ class Order:
         return W[ind_px],I[:,ind_px]
 
 
-
     def tune_pca(self,Nmap=5):
     
         
@@ -765,6 +764,6 @@ class Order:
         x_pca = np.float32(ff)
         pca.fit(x_pca)       
         var   = pca.explained_variance_ratio_ 
-        ncf   = len(np.where(var>np.max(thres))[0])
+        ncf   = len(np.where(var>2.0*np.max(thres))[0])
         return ncf
 

@@ -15,15 +15,16 @@ import time
 
 def rotate(R,wl,vrot,superrot,angle_super=25.0*np.pi/180,sigma=1270.0) :
 
-    if vrot<100: #we are not able to see the difference anyway , and that prevents from creating exceptions in 
+    if vrot<200: #we are not able to see the difference anyway , and that prevents from creating exceptions in 
     #the code
-        vrot = 100
+        vrot = 200
     
     c0 = 299792458.0
 
     #we take a kernel of size 50 000 km/s, it is exagerated but is safe
+
     vlim = 50000.0
-    nv = 1000
+    nv = 5000
     v = np.linspace(-vlim,vlim,nv)
     dv = v[1]-v[0]
     #we interpolate the model onto a regularly spaced speed array
