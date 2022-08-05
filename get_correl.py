@@ -45,7 +45,7 @@ Vsys       = np.linspace(Vmin,Vmax,Nv)
 ### READ data
 print("Read data from",filename)
 with open(filename,'rb') as specfile:
-    orders,WW,Ir,T_obs,phase,window,berv,vstar,airmass,SN = pickle.load(specfile)
+    orders,WW,Ir,T_obs,phase,window,berv,vstar,airmass,SN, proj = pickle.load(specfile)
 nord     = len(orders)
 
 ### Select orders for the correlation
