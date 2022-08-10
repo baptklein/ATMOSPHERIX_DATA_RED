@@ -23,9 +23,8 @@ import reduce_encoder as encoder
 
 ### Name of the picle file to read the data from
 
-filename = 'data_nopl.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
-nam_fin  = 'reduced_data.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
-
+filename = 'Simu_GL15A_2_HD189_multi-T900.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
+nam_fin  = 'reduced_data_2_nopca.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
 nam_info = "info.dat" ### Store main info about each order
 
 ### Correction of stellar contamination
@@ -60,7 +59,7 @@ Npt_lim  = 800      # If the order contains less than Npt_lim points, it is disc
 
 ### Interpolation parameters
 pixel    = np.linspace(-1.13,1.13,11)   ### Sampling a SPIRou pixel in velocity space -- Width ~ 2.28 km/s
-kind     = "linear"                     ### scipy interp1d parameter
+sig_g    = 1.13                         ### STD of one SPIRou px in km/s
 N_bor    = 15                           ### Nb of pts removed at each extremity (twice)
 
 ### Normalisation parameters
@@ -73,13 +72,13 @@ det_airmass = False
 deg_airmass = 2
 
 ### Parameters PCA
-mode_pca    = "PCA"                     ### "pca"/"PCA" or "autoencoder"
+mode_pca    = "pca"                     ### "pca"/"PCA" or "autoencoder"
 npca        = np.array(1*np.ones(len(orders)),dtype=int)      ### Nb of removed components
 auto_tune   = True                  ### Automatic tuning of number of components
 
 ### Plot info
 plot_red    = True
-numb        = 47
+numb        = 46
 nam_fig     = "reduc_" + str(numb) + "_jun19.png"
     
     
@@ -103,7 +102,7 @@ print("DONE\n")
 
 ind_rem     = []
 V_corr      = vstar - berv                  ### Geo-to-bary correction
-n_ini,n_end = get_transit_dates(window) ### Get transits start and end indices
+n_ini,n_end = get_transit_dates(window)     ### Get transits start and end indices
 c0          = Constants().c0
 t0          = time.time()
 NCF         = np.zeros(nord)
@@ -113,12 +112,13 @@ file        = open(nam_info,"w")
 print("START DATA REDUCTION")
 for nn in range(nord):
 
+
     O         = list_ord[nn]
     print("ORDER",O.number)
 
     ### First we identify strong telluric lines and remove the data within these lines -- see Boucher+2021
-    W_cl,I_cl =  O.remove_tellurics(dep_min,thres_up)
-    
+    W_cl,I_cl,A_cl =  O.remove_tellurics(dep_min,thres_up)
+        
     ### If the order does not contain enough points, it is discarded
     if len(W_cl) < Npt_lim:
         print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(W_cl)," pts remaining)")
@@ -147,9 +147,9 @@ for nn in range(nord):
         
         ### If the order is kept - Remove high-SNR out-of-transit reference spectrum    
         ### Start by computing mean spectrum in the stellar rest frame
-        I_bary    = move_spec(V_cl,I_cl,V_corr,pixel,kind)  ## Shift to stellar rest frame      
+        I_bary    = move_spec(V_cl,I_cl,V_corr,sig_g)  ## Shift to stellar rest frame      
         I_med     = np.median(np.concatenate((I_bary[:n_ini],I_bary[n_end:]),axis=0),axis=0) ## Compute median out-of-transit        
-        I_med_geo = move_spec(V_cl,np.array([I_med]),-1.*V_corr,pixel,kind)  ## Move back ref spectrum to Geocentric frame
+        I_med_geo = move_spec(V_cl,np.array([I_med]),-1.*V_corr,sig_g)  ## Move back ref spectrum to Geocentric frame
         I_sub1    = np.zeros(I_cl.shape)
         for kk in range(len(I_cl)):
             X          = np.array([np.ones(len(I_med_geo[kk])),I_med_geo[kk]],dtype=float).T
@@ -165,6 +165,7 @@ for nn in range(nord):
             p,pe       = LS(X,I_sub1[kk])
             Ip         = np.dot(X,p)
             I_sub2[kk] = I_sub1[kk]/Ip    
+            
             
         ### Remove extremities to avoid interpolation errors
         W_sub = W_cl[N_bor:-N_bor]
@@ -185,7 +186,7 @@ for nn in range(nord):
             I_det           = np.exp(I_det_log)
             O.I_fin         = I_det
         else:
-            O.I_fin         = I_norm2
+            O.I_fin         = I_norm2 - 1.0
         O.W_fin  = W_norm2  
         O.W_bary = []
         for uu in range(len(O.I_fin)):
@@ -197,8 +198,8 @@ for nn in range(nord):
         
         ### STEP 4 -- REMOVING CORRELATED NOISE -- PCA/AUTOENCODERS
         Il    = np.log(O.I_fin+1.0)
-        im    = np.nanmean(Il)
-        ist   = np.nanstd(Il)        
+        im    = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
+        ist   = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T      
         ff    = (Il - im)/ist
         
         XX    = np.where(np.isnan(O.I_fin[0]))[0]
@@ -231,8 +232,6 @@ for nn in range(nord):
                     O.I_pca = np.exp((ff-x_pca_projected)*ist+im)-1.0
                     NCF[nn] = n_com
                     print(n_com,"PCA components discarded")
-                    txt = str(O.number) + "  " + str(len(O.W_fin)) + "  " + str(np.mean(O.SNR)) + "  " + str(np.mean(O.SNR_mes)) + "  " + str(np.mean(O.SNR_mes_pca)) + "  " + str(n_com) + "\n"
-                    file.write(txt)
                     
                     #For Gibson2021
                     try:
@@ -243,10 +242,15 @@ for nn in range(nord):
                 else:
                     print("O PCA components discarded")
                     O.I_pca = O.I_fin
-                    O.proj = np.zeros((len(ff),len(ff)))
+                    O.proj  = np.zeros((len(ff),len(ff)))
 
             elif mode_pca == "autoencoder":
                O.I_pca = encoder.apply_encoder(O.I_fin) 
+               
+            else:
+                O.I_pca = O.I_fin
+                O.proj  = np.zeros((len(ff),len(ff)))
+                n_com   = 0
                 
             ### ESTIMATES FINAL METRICS
             N_px          = 200
@@ -254,13 +258,15 @@ for nn in range(nord):
             O.SNR_mes     = 1./np.std(O.I_fin[:,indw-N_px:indw+N_px],axis=1) 
             O.SNR_mes_pca = 1./np.std(O.I_pca[:,indw-N_px:indw+N_px],axis=1)        
             
+            txt = str(O.number) + "  " + str(len(O.W_fin)) + "  " + str(np.mean(O.SNR)) + "  " + str(np.mean(O.SNR_mes)) + "  " + str(np.mean(O.SNR_mes_pca)) + "  " + str(n_com) + "\n"
+            file.write(txt)            
 
         
         if plot_red == True and O.number == numb:
             print("Plot data reduction steps")
-            lab = ["Step 1","Step 2","Step 3","Step 4"]
-            plot_reduction(phase,W_cl,I_sub2,W_norm1,I_norm1,O.W_fin,O.I_fin,O.W_fin,O.I_pca,lab,nam_fig)        
-        
+            lab = ["Blaze-corrected spectra","Median-corrected spectra","Normalised spectra","PCA-corrected spectra"]
+            plot_reduction(phase,W_cl,I_cl-I_cl.mean(),W_sub,I_sub-1.,O.W_fin,O.I_fin,O.W_fin,O.I_pca,lab,nam_fig)        
+
         
 file.close()
 print("DATA REDUCTION DONE\n")        

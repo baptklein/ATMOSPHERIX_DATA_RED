@@ -232,11 +232,10 @@ def get_transit_dates(wind):
         n_end = cc
     return n_ini,n_end
     
-    
 # -----------------------------------------------------------
 # Move spectra from one frame to another
 # -----------------------------------------------------------    
-def move_spec(V,I,Vc,pixel,kind="linear"):
+def move_spec(V,I,Vc,sig_g):
     """
     --> Inputs:     - V:     Velocity vector (assumed 1D)
                     - I:     Array of flux values (assumed 2D [N_obs,N_wav])
@@ -250,12 +249,17 @@ def move_spec(V,I,Vc,pixel,kind="linear"):
     """
 
     I_al    = np.zeros((len(Vc),len(V)))
+    dddv    = np.linspace(-3.*sig_g,3.*sig_g,30)
+    G       = normal_law(dddv,0.0,sig_g)
+    step    = dddv[1]-dddv[0]
     for ii in range(len(Vc)):
-        if len(I) == len(Vc): fi = interp1d(V,I[ii],kind=kind,fill_value="extrapolate")
-        else:                 fi = interp1d(V,I[0],kind=kind,fill_value="extrapolate")
-        I_tmp     = np.zeros(len(V))
-        for pp in pixel: I_tmp    += fi(V+Vc[ii]+pp)
-        I_al[ii]      = I_tmp/len(pixel)   
+        ### Depending on which frame we're moving into
+        if len(I) == len(Vc): fi = interp1d(V,I[ii],kind="cubic",fill_value="extrapolate")
+        else:                 fi = interp1d(V,I[0],kind="cubic",fill_value="extrapolate")
+        I_tmp     = step * (fi(V+Vc[ii]+dddv[0])*G[0]+fi(V+Vc[ii]+dddv[-1])*G[-1]) * 0.5
+        for hh in range(1,len(dddv)-1):
+            I_tmp += step*fi(V+Vc[ii]+dddv[hh])*G[hh]  
+        I_al[ii] = I_tmp          
     return I_al 
 
 
@@ -314,6 +318,12 @@ def hyp_inv(par,yy):
 def crit_hyp(par,xx,yy):
     y_pred = hyp(par,xx)
     return np.sum((yy-y_pred)**(2))  
+    
+        
+def normal_law(v,mu,sigma):
+    g = 1./(np.sqrt(2.*np.pi)*sigma) * np.exp(-0.5*((v-mu)/(sigma))**(2))
+    return g
+    
 
 
 # -----------------------------------------------------------
@@ -466,12 +476,7 @@ class Order:
         self.W_bary   = []      # Final wavelength vector in the stellar rest frame
         self.I_fin    = []      # Reduced flux matrix before PCA cleaning
         self.I_pca    = []      # Reduced flux matrix after PCA cleaning
-
-        ### Model and correlation parameters
-        self.Wm       = []
-        self.Im       = []
-        self.corr     = []
-
+        self.proj     = []      # Reduced projected flux matrix after Gibson+21 cleaning
 
 
 
@@ -538,6 +543,7 @@ class Order:
 
 
 
+
     # -----------------------------------------------------------
     # Remove regions of strong telluric absorption
     # 1. From DRS-provided telluric spectrum, spot all regions
@@ -583,9 +589,9 @@ class Order:
 
         ### Remove regions of strong telluric absorption
         I_cl    = np.delete(self.I_raw,ind_tel,axis=1)
+        A_cl    = np.delete(self.I_atm,ind_tel,axis=1)
         W_cl    = np.delete(self.W_raw,ind_tel)
-        return W_cl,I_cl
-
+        return W_cl,I_cl,A_cl
 
 
     # -----------------------------------------------------------
@@ -751,8 +757,8 @@ class Order:
         
         ### Initialisation:
         Il            = self.I_fin
-        im            = np.nanmean(Il)
-        ist           = np.nanstd(Il)        
+        im            = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
+        ist           = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T        
         ff            = (Il - im)/ist        
         
         ### Determinate S/N at the center of the order for each epoch
@@ -771,12 +777,13 @@ class Order:
         for ii in range(Nmap):        
             ### Generate noise map
             NN    = np.random.normal(0.0,std_in*ampl)
-            NN   -= NN.mean()
-            NN   /= NN.std()
+            Nm    = np.dot(np.mean(NN,axis=0).reshape((NN.shape[1],1)),np.ones((1,NN.shape[0]))).T
+            Ns    = np.dot(np.std(NN,axis=0).reshape((NN.shape[1],1)),np.ones((1,NN.shape[0]))).T  
+            Nf    = (NN-Nm)/Ns          
             
             ### Apply PCA
-            pca   = PCA(n_components=len(NN))
-            pca.fit(np.float32(NN))
+            pca   = PCA(n_components=len(Nf))
+            pca.fit(np.float32(Nf))
             var       = pca.explained_variance_ratio_    
             
             ###Store highest eigenvalue     
@@ -789,7 +796,6 @@ class Order:
         var   = pca.explained_variance_ratio_ 
 
         ### Nb of components: larger than 2*max highenvalue
-
         ncf   = len(np.where(var>2.0*np.max(thres))[0])
 
         return ncf
