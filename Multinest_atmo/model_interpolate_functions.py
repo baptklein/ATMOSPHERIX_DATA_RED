@@ -151,14 +151,11 @@ class total_model:
                     model_ret[n] = I_tmp
                 else:
                     model_ret[n] = np.zeros(len(V_data))
-            mean_to_keep = np.mean(model_ret,axis=1)
-            model_ret = (model_ret.T-mean_to_keep).T
-            Il    = np.log(model_ret+1.0)
-            im    = np.nanmean(Il)
-            ist   = np.nanstd(Il)        
+            Il = np.log(model_ret+1.0)
+            im    = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
+            ist   = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T      
             ff    = (Il - im)/ist
             model_ret= np.exp((ff-np.matmul(self.proj[i],ff))*ist+im)-1.0
-            model_ret = (model_ret.T+mean_to_keep).T
             mask = np.array(mask)
             model_tot = model_tot+(model_ret[mask].tolist())
         # np.savetxt("lol.txt",I_ret)
