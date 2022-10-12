@@ -796,7 +796,7 @@ class Order:
         var   = pca.explained_variance_ratio_ 
 
         ### Nb of components: larger than 2*max highenvalue
-        ncf   = len(np.where(var>2.0*np.max(thres))[0])
+        ncf   = len(np.where(var>1.0*np.max(thres))[0])
 
         return ncf
         
