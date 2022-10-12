@@ -181,12 +181,12 @@ for nn in range(nord):
 
         ### STEP 3 -- DETREND WITH AIRMASS -- OPTIONAL
         if det_airmass:
-            I_log           = np.log(I_norm1)
-            I_det_log       = O.detrend_airmass(W_norm2,I_norm2,airmass,deg_airmass)
+            I_log           = np.log(I_norm2)
+            I_det_log       = O.detrend_airmass(W_norm2,I_log,airmass,deg_airmass)
             I_det           = np.exp(I_det_log)
             O.I_fin         = I_det
         else:
-            O.I_fin         = I_norm2 - 1.0
+            O.I_fin         = I_norm2
         O.W_fin  = W_norm2  
         O.W_bary = []
         for uu in range(len(O.I_fin)):
@@ -197,7 +197,7 @@ for nn in range(nord):
         
         
         ### STEP 4 -- REMOVING CORRELATED NOISE -- PCA/AUTOENCODERS
-        Il    = np.log(O.I_fin+1.0)
+        Il    = np.log(O.I_fin)
         im    = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
         ist   = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T      
         ff    = (Il - im)/ist
