@@ -24,13 +24,13 @@ name_fin = "data_nopl.pkl"
 orders   =  np.arange(31,80)[::-1].tolist() 
 
 ### Ephemerides (to compute orbital phase)
-T0       = 2459130.8962180                  #Mid-transit time [BJD]
-Porb     = 2.21857545                       #Orbital period [d]
+T0       =  2458334.990899                 #Mid-transit time [BJD]
+Porb     = 2.218578                       #Orbital period [d]
 
 ### Transit parameters -- Compute the transit window
 ### Using batman python package https://lweb.cfa.harvard.edu/~lkreidberg/batman/
 ### Get the limb-darkening coefficients in H band from Claret+2011: https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=J/A+A/529/A75
-Rp       = 42105.5 #Planet radius  [km]
+Rp       = 38451.05 #Planet radius  [km]
 Rs       = 261127  #Stellar radius [km] 
 ip       = 90.0    #Transit incl.  [deg]
 ap       = 14.05   #Semi-maj axis  [R_star]
@@ -41,7 +41,7 @@ ld_coef  = [0.0156,0.313]  #Limb-darkening coefficients
 
 
 ### Stellar radial velocity info
-Ks        = 0.090    #RV semi-amplitude of the star orbital motion due to planet [km/s]
+Ks        = 0.20    #RV semi-amplitude of the star orbital motion due to planet [km/s]
 V0        = 11.73    #Stellar systemic velocity [km/s]
 
 ### Plots

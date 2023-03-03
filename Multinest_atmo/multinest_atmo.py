@@ -96,7 +96,7 @@ unprior = dict( kappa_IR=0.01,
         MMR_CO=0.0,
         MMR_CO2=0.0,)
 
-parameters = ["Kp","Vsys","MMR_Fe","T_eq"]
+parameters = ["Kp","Vsys","H2O","T_eq"]
 n_params = len(parameters)
 
 
@@ -110,13 +110,15 @@ theor_spectra = model.Model(config)
 
 pri=Priors()
 def prior(cube, ndim, nparams):
-    cube[0] = pri.UniformPrior(cube[0], 0, 300)           # uniform Kp 0:300
-    cube[1] =  pri.UniformPrior(cube[1], -40,40)           # un
-    cube[2] =  pri.UniformPrior(cube[2], -8, -1)           # un
-    cube[3] =  pri.GaussianPrior(cube[3], 1400, 300)           # un
+    cube[0] = pri.UniformPrior(cube[0], 125, 185.)           # uniform Kp 0:300
+    cube[1] =  pri.UniformPrior(cube[1], -10.,0.)           # un
+    cube[2] =  pri.UniformPrior(cube[2], -8., -1.0)           # un
+    cube[3] =  pri.UniformPrior(cube[3], 200.,2000.)            # un
+#    cube[4] =  pri.UniformPrior(cube[4], 0.0, 10000.0)
+
 
 def loglike(cube, ndim, nparams):
-    Kp, Vsys, H2O,T_eq= cube[0], cube[1], cube[2],cube[3]
+    Kp, Vsys,H2O,T_eq= cube[0], cube[1], cube[2],cube[3]
     param_dic = dict(Kp=Kp, Vsys=Vsys,MMR_H2O=H2O,T_eq=T_eq)
 
     model_dic = theor_spectra.return_reduced_model(param_dic)
@@ -128,9 +130,9 @@ def loglike(cube, ndim, nparams):
 
 
 pymultinest.run(loglike, prior, n_params,outputfiles_basename = 
-                "/home/florian/Bureau/Atmosphere_SPIRou/Multinest_atmo/pkl/output_test/", 
+                "/home/fdebras/Multinest_from_calmip/Multinest_HD189/HD189_sepjun_comparboucher_exomol_broad/", 
                 resume = False, verbose = True,
-                n_live_points=8,
+                n_live_points=384,
                 n_iter_before_update=1)
 
 

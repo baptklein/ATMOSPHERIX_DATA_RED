@@ -36,6 +36,7 @@ def calc_likelihood(corr,like_type):
         for i  in range(len(corr["data"])):
             N = len(corr["data"][i])
             tolog = np.sum((np.array(corr["data"][i])-np.array(corr["model"][i]))**2/np.array(corr["std"][i])**2)/N
+            
             if tolog<=0.0:
                 print(tolog)
             like[i]= -N/2.*(np.log(tolog))
