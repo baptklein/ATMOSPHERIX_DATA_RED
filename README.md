@@ -29,6 +29,10 @@ import time
     - Correct for Blaze and remove NaNs from the observations
     - Compute orbital phase and transit window
     - Store pre-processed data in ".pkl" files
+   
+  Test case: You can download observations of Gl 15 A and the associated models via the following repository:
+  https://drive.google.com/drive/folders/1CHupP3I4r6bzJgUoblpmi8SKpEQvRnEs?usp=sharing
+   
   To apply the code, change the paramters in the file "read_data.py" and type the following command line:
     
       $ python read_data.py
@@ -38,7 +42,7 @@ import time
 
       $ python reduce_data.py
       
-   Test case: You can download observations of Gl 15 A (in the .pkl format) and the associated models via the following repository:
+   If you struggle with read_data (step 1), you can just download the already read pkl file here: 
    https://drive.google.com/drive/folders/1eWhGpNrjLUSoyWKbWYVv15o0UZ0Ucn6D?usp=sharing
    
    
@@ -47,6 +51,8 @@ import time
   Change parameters in "get_correl.py" and run
   
     $ python get_correl.py
+    
+  WARNING: get_correl is much worse than Correlate.py but more user friendly. If you have time or are one of Florian's interns, use Correlate.
  
  
 4. The instructions to run the nested sampling are in the multinest_atmo folder. 
