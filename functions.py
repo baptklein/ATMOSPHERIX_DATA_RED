@@ -26,6 +26,9 @@ warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 from scipy.optimize import minimize
 from sklearn.decomposition import PCA
 
+import batman
+
+
 class Constants:
     def __init__(self):
         self.c0 = 299792.458 #km/s
@@ -170,7 +173,6 @@ def correct_star(V_obs,I_obs,VS_corr,IS_corr,V_shift,I_atm,thres_tel=0.03,sig_g=
 # Uncomment lines below to use batman module to compute transit flux
 # See information in https://lweb.cfa.harvard.edu/~lkreidberg/batman/
 # -----------------------------------------------------------
-import batman
 def compute_transit(Rp,Rs,ip,T0,ap,Porb,ep,wp,limb_dark,uh,T_obs):
 
     """
@@ -757,8 +759,10 @@ class Order:
         
         ### Initialisation:
         Il            = self.I_fin
-        im            = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
-        ist           = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T        
+        # im            = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
+        # ist           = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T   
+        im            = np.nanmean(Il)
+        ist           = np.nanstd(Il)   
         ff            = (Il - im)/ist        
         
         ### Determinate S/N at the center of the order for each epoch

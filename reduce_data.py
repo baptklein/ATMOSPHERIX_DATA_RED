@@ -198,8 +198,10 @@ for nn in range(nord):
         
         ### STEP 4 -- REMOVING CORRELATED NOISE -- PCA/AUTOENCODERS
         Il    = np.log(O.I_fin)
-        im    = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
-        ist   = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T      
+        # im    = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
+        # ist   = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T     
+        im    = np.nanmean(Il)
+        ist   = np.nanstd(Il)
         ff    = (Il - im)/ist
         
         XX    = np.where(np.isnan(O.I_fin[0]))[0]
@@ -276,6 +278,7 @@ print("DATA REDUCTION DONE\n")
 print("PLOT METRICS")
 orders_fin   = np.delete(orders,ind_rem)
 list_ord_fin =  np.delete(list_ord,ind_rem)
+SN_fin = np.delete(SN,ind_rem,axis=0)
 nam_fig      = "spectrum_dispersion.png"
 plot_spectrum_dispersion(list_ord_fin,nam_fig)
 print("DONE\n")
@@ -290,7 +293,7 @@ for nn in range(len(orders_fin)):
     WW.append(O.W_fin)
     Iend.append(O.I_pca)
     projtot.append(O.proj)
-savedata = (orders_fin,WW,Iend,T_obs,phase,window,berv,vstar,airmass,SN,projtot)
+savedata = (orders_fin,WW,Iend,T_obs,phase,window,berv,vstar,airmass,SN_fin,projtot)
 with open(nam_fin, 'wb') as specfile:
     pickle.dump(savedata,specfile)
 print("DONE")

@@ -7,10 +7,6 @@ import time
 
 from scipy import interpolate
 
-#import matplotlib.pyplot as plt
-#import matplotlib
-
-
 
 class Model_2D:
     
@@ -35,26 +31,6 @@ class Model_2D:
         """       
         self.Fm = interpolate.interp1d(self.Wm,self.absor,kind='linear')
 
-    
-#    def build_model(self,window):
-#        """
-#        Create a 2D sequence template
-#        Interpolate each template         
-#        """
-#        
-#        I_t   = self.absor
-#        I_mod = []
-#        for nn in range(len(window)):
-#            I_line = I_t*window[nn]
-#            I_mod.append(I_line)
-#        I_mod = np.array(I_mod,dtype=float)
-#                
-#        # Compute interpolation of each line of the model
-#        FM = []
-#        for n in range(len(window)):
-#            f_mod = interpolate.interp1d(self.Vm,I_mod[n],kind='linear')
-#            FM.append(f_mod)
-#        self.Fm = np.array(FM)
 
 
 class total_model:
@@ -125,8 +101,6 @@ class total_model:
         model_tot = []  ### Init binned sequence of spectra
         std_ret  = []
         c0      = 29979245800.0e-5
-        #for i in range(len(self.orders)):
-            #print(self.models[i].nord)
 
         
         for i in range(len(self.orders)):
@@ -141,81 +115,24 @@ class total_model:
                     data_tmp = np.zeros(len(V_data))
     
     			### For dd in the window centered on 0 and of 1 px width (here 2 km/s)
-                    # print(self.models[i].nord,self.Wmean[i])
                     for dd in self.ddv:
-                        #print(((V_data+dd-DVP[n])/c0+1.0)*self.Wmean[i])
-                        #print(np.min(((V_data+dd-DVP[n])/c0+1.0)*self.Wmean[i]),np.max(((V_data+dd-DVP[n])/c0+1.0)*self.Wmean[i]))
                         I_tmp += self.models[i].Fm(((V_data+dd-DVP[n])/c0+1.0)*self.Wmean[i])*self.window[n] 
                     I_tmp = I_tmp/len(self.ddv)### Average values to be closer to measured values
                     I_tmp -= np.mean(I_tmp)
                     model_ret[n] = I_tmp
                 else:
                     model_ret[n] = np.zeros(len(V_data))
-            Il = np.log(model_ret+1.0)
-            im    = np.dot(np.nanmean(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T
-            ist   = np.dot(np.nanstd(Il,axis=0).reshape((Il.shape[1],1)),np.ones((1,Il.shape[0]))).T      
-            ff    = (Il - im)/ist
-            model_ret= np.exp((ff-np.matmul(self.proj[i],ff))*ist+im)-1.0
+            try:
+                Il    = np.log(model_ret+1.0)
+                im    = np.nanmean(Il)
+                ist   = np.nanstd(Il) 
+                ff    = (Il - im)/ist
+                model_ret= np.exp((ff-np.matmul(self.proj[i],ff))*ist+im)-1.0
+
+            except:
+                print("oups")
+                pass
             mask = np.array(mask)
             model_tot = model_tot+(model_ret[mask].tolist())
-        # np.savetxt("lol.txt",I_ret)
         return model_tot ### Binned modelled sequence shifted at (kp,v0)
 
-
-        # 
-        # V_mod   = c0*(self.Wm/self.W_mean-1)
-        # self.Vm = V_mod 
-
-    # def make_corr(self,V_data,I_data):
-
-    #     """ 
-    #     Explore (Kp,V0) parameter space by correlating the modelled sequence of spectra with the reduced sequence
-    #     for all couple of parameters in the grid. 
-
-    #     Inputs:
-    #     - V_data: Velocity matrix where each line is the velocity vector of the spectrum shifted in the stellar rest frame
-    #     - I_data: reduced sequence of spectra
-
-    #     Outputs:
-    #     - corr: Matrix of correlation coefficients (shape: (len(self.K_vec),len(self.V0_vec)))
-    #     """
-
-    #     Im = self.bin_model(self.Kp,self.Vsys,V_data)
-    #     corr = np.array(get_cc(I_data,Im),dtype=float)
-
-        
-    #     self.model2D = Im
-    #     self.corrcoeff = corr
-
-
-# def get_cc(Yd,Ym):
-#     """
-#     Compute the correlation coefficient between the sequence of spectra and the modelled sequence of the spectra
-#     If a spectrum in the modelled sequence of spectra is 0, np.corrcoef returns NaN. This displays a warning message,
-#     but we account for this in the process.
-#     Inputs:
-#     - Yd: 2D sequence of spectra
-#     - Ym: Modelled sequence of spectra (binned at the resolution of data - same shape as Yd)
-
-#     Outputs:
-#     - Correlation coefficient between the 2 spectra
-#     """
-
-#     C0 = np.zeros(len(Yd))
-#     for n in range(len(Yd)):
-#         #c = np.ma.corrcoef(Yd[n],Ym[n]).data[0,1]
-#         c = np.corrcoef(Yd[n],Ym[n])[0,1]
-#         if np.isfinite(c): C0 [n]= c  ### Avoid NaNs (modelled spectrum is 0 (no planet in out-of-transit periods)
-#     return C0
-
-
-
-
-
-
-
-
-
-
-
-        

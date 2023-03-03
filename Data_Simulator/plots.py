@@ -303,8 +303,9 @@ def plot_spectrum_dispersion(lord,nam_fig):
     LO         = np.zeros(len(lord),dtype=int)
 
     for kk in range(len(lord)):
+        
         O              = lord[kk]
-        disp_mes       = 1./O.SNR_mes
+        disp_mes       = 1./np.array(O.SNR_mes)
         disp_drs       = 1./O.SNR
         rms_sp[kk]     = np.mean(disp_mes)
         rms_sp_s[kk]   = np.std(disp_mes)

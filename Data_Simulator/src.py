@@ -143,7 +143,7 @@ class Order:
     #    input sequence of spectra by the synthetic sequence of transit
     #    depths
     # -----------------------------------------------------------
-    def add_planet(self,Wm,Im,flux,phase,K_inj,V_inj,Vc,ampl=1.0):
+    def add_planet(self,Wm,Im,window,phase,K_inj,V_inj,Vc,ampl=1.0):
 
         """
         --> Inputs:      - Order object
@@ -162,22 +162,23 @@ class Order:
         self.Wm    = Wm
         self.Im    = ampl*(Im-np.max(Im))+np.max(Im)
         vp         = rvp(phase,K_inj,V_inj)     # Compute planet RV
-        self.I_syn = np.ones(self.I_raw.shape)
+        self.I_syn = np.zeros(self.I_raw.shape)
         pixel      = np.linspace(-1.13,1.13,11) # Window for integrating over a SPIRou pixel [km/s] -- Velocity bins of 2.28 km/s (Donati+2020b)
 
 
         for nn in range(len(self.I_raw)): # For each observation date
         
-            Imm  = self.Im/np.min(flux)
+            Imm  = self.Im#/np.min(flux)
         
-            if flux[nn] != 1.0:
+            if window[nn] != 0.0:
                 f     = interp1d(self.Wm,Imm,kind="linear")  # Interpolate model
                 I_ttt = np.zeros(len(self.W_raw))
                 
                 # Shift model in the Geocentric frame
                 for pp in pixel: I_ttt += f(self.W_raw/(1.0+((Vc[nn]+vp[nn]+pp)/Constants().c0)))
-                self.I_syn[nn] = I_ttt/len(pixel)*flux[nn]
+                self.I_syn[nn] = I_ttt/len(pixel)*window[nn]
                 
+        self.I_syn=1-self.I_syn
         I_fin = self.I_raw*self.I_syn
         return self.I_syn
         
@@ -507,6 +508,7 @@ class Order:
         ind          = np.argmin(np.abs(self.W_red-self.W_red.mean())) ## Spot order center
         It           = self.I_red[:,ind-N_px:ind+N_px]
         self.SNR_mes = 1./np.std(It,axis=1) ## Compute empirical S/N
+        print(self.SNR_mes)
 
 
 

@@ -43,7 +43,7 @@ class Model(object):
         self.pressures=np.logspace(self.p_minbar,self.p_maxbar,self.n_pressure)
 
         for i in self.orderstot: 
-            atmosphere = Radtrans(line_species = ['H2O_main_iso'], \
+            atmosphere = Radtrans(line_species = ['H2O_exomol'], \
 		  rayleigh_species = ['H2', 'He'], \
 		  continuum_opacities = ['H2-H2'], \
 		  wlen_bords_micron = [self.lambdas[i][0]/1000.0*0.985,self.lambdas[i][1]/1000.0*1.015], \
@@ -64,7 +64,7 @@ class Model(object):
         temperature = para_dic["T_eq"]*np.ones_like(self.pressures)
 
         Z= 10.0**para_dic["MMR_H2O"]#+10.0**para_dic["MMR_CO"]
-        # Z= self.MMR_H2O+self.MMR_CO2+self.MMR_CO
+#        Z= 0.007710358699296012
 
 
         MMR_H2 = (1.0-Z)*(1-self.HHe_ratio)
@@ -77,7 +77,9 @@ class Model(object):
 
         self.abundances['He'] = MMR_He * np.ones_like(temperature)
 
-        self.abundances['H2O_main_iso'] = 10.0**para_dic["MMR_H2O"] * np.ones_like(temperature)
+        #self.abundances['H2O_main_iso'] = 0.007710358699296012 * np.ones_like(temperature)
+
+        self.abundances['H2O_exomol'] = 10.0**para_dic["MMR_H2O"] * np.ones_like(temperature)
         # self.abundances['CO2_main_iso'] = 10.0**para_dic["MMR_CO2"] * np.ones_like(temperature)
         #self.abundances['CO_main_iso'] = 10.0**para_dic["MMR_CO"] * np.ones_like(temperature)
 
@@ -106,8 +108,8 @@ class Model(object):
             radius_transm.append(atmo.transm_rad/100.0)
 
         if self.winds:
-            self.superrot = para_dic["superrot"]
-            self.rot_speed = para_dic["rot_speed"]
+            self.superrot = 0.0
+            self.rot_speed = 0.0
 
 
         return {
