@@ -23,7 +23,6 @@ import reduce_encoder as encoder
 
 pipeline_rep = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/ATMOSPHERIX_DATA_RED/"
 
-
 ### Name of the picle file to read the data from
 
 filename = pipeline_rep+'Simu_GL15A_HD189_Kp120_v30_onlyH2O-VMR3-T900.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
