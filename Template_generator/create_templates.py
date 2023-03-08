@@ -20,13 +20,13 @@ nf = 501
 
 R_unit = "cm"
 # R_unit = "none"
-Rs = 0.777*696340000.0 # in solar unit
+Rs = 0.375*696340000.0 # in solar unit
 
 lambdas_unit = "micron"
 lambdas_unit = "nano"
 
 transit_depth = True
-# transit_depth = False
+transit_depth = False
 
 broadening = True
 broadening = False
@@ -36,16 +36,16 @@ norm = True
 
 Nphase = 1
 #name only needed if Nphase =1
-name ="spectrum_hd189_exeter_h2o_aq803_harada_wr_exomol"
+name ="GL15A_HD189_onlyH2O-VMR3-T900"
 
-dire = "/home/florian/Bureau/Atmosphere_SPIRou/Models/HD189/Results/"
+dire = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/ATMOSPHERIX_DATA_RED/Data_Simulator/Model/Results/"
 dire_res = dire+"/to-correl/"
 
 # dire_res = "/home/florian/Bureau/Atmosphere_SPIRou/Models/GL15A/HD189/to-correl/"
 
 #SPIRou
 list_ord = np.arange(31,80)
-wlen_file ="/home/florian/Bureau/Atmosphere_SPIRou/wlen.dat"
+wlen_file ="/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/ATMOSPHERIX_DATA_RED/wlen.dat"
 
 
 

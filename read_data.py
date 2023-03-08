@@ -13,12 +13,15 @@ import pickle
 from functions import *
 
 
+pipeline_rep = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/ATMOSPHERIX_DATA_RED/"
+
+
 ### Directory where all the "t.fits" files are stores 
 ### WARNING -- No planets injected in Gl 15 A SPIRou fits files
-dir_data = "Data/T_files"
+dir_data = pipeline_rep+"Data/T_files"
 
 ### Name of the pickle file to store the info in 
-name_fin = "data_nopl.pkl"
+name_fin = pipeline_rep+"data_nopl.pkl"
 
 ### List of SPIRou absolute orders -- Reddest: 31; Bluest: 79
 orders   =  np.arange(31,80)[::-1].tolist() 
@@ -120,7 +123,7 @@ if plot:
     plt.xlabel("Time wrt transit [h]")
     ax.set_ylabel("Peak S/N\n", labelpad=ypad)
     plt.subplots_adjust(hspace=0.02)
-    plt.savefig("transit_info.pdf",bbox_inches="tight")
+    plt.savefig(pieline_rep+"Figures/transit_info.pdf",bbox_inches="tight")
     plt.close()
     print("DONE")
 
