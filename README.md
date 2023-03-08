@@ -58,4 +58,4 @@ import time
   This will use the templates in Data_Simulator/Model/results/to-correl, created by the file create_templates in Template_generator. If you wish to use different planets you will obviously need to create new templates. 
  
  
-4. The instructions to run the nested sampling are in the multinest_atmo folder. Have fun !
+4. The instructions to run the nested sampling are in the multinest_atmo folder. Have fun !!
