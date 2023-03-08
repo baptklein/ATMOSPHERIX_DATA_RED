@@ -236,6 +236,26 @@ snrmap = np.std((c))
 #
 plt.figure()
 
+SMALL_SIZE = 28
+MEDIUM_SIZE = 32
+BIGGER_SIZE = 34
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+
 plt.contourf(Vsys,Kp,np.sum(np.sum(correl_boucher[:,:,sel],axis=3),axis=2)/snrmap,cmap="gist_heat",levels=20)
 plt.colorbar(label="SNR")
-plt.savefig(pipeline_rep+"Correlated.png")
+
+
+plt.xlabel("Doppler shift (km.s$^{-1}$)")
+plt.ylabel("Orbital semi amplitude (km.s$^{-1}$)")
+plt.plot([30,30],[20,220],'--',color='white')
+plt.plot([0,60],[120,120],'--',color='white')
+
+plt.savefig(pipeline_rep+"Figures/Correlated.png")
