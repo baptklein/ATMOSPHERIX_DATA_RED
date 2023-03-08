@@ -258,4 +258,6 @@ plt.ylabel("Orbital semi amplitude (km.s$^{-1}$)")
 plt.plot([30,30],[20,220],'--',color='white')
 plt.plot([0,60],[120,120],'--',color='white')
 
+plt.tight_layout()
+
 plt.savefig(pipeline_rep+"Figures/Correlated.png")
