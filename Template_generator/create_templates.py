@@ -45,7 +45,7 @@ dire_res = dire+"/to-correl/"
 
 #SPIRou
 list_ord = np.arange(31,80)
-wlen_file ="/home/florian/Bureau/Atmosphere_SPIRou/wlen_orders.dat"
+wlen_file ="/home/florian/Bureau/Atmosphere_SPIRou/wlen.dat"
 
 
 
