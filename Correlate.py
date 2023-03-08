@@ -13,25 +13,28 @@ from scipy import stats
 import pickle
 import time
 
+
+pipeline_rep = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/ATMOSPHERIX_DATA_RED/"
+
 #WHere is your pkl file and what is its name. don't forget the slash at the end of the directrory
-REP_DATA = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/HD189/reduced/"
-filename  = 'Simu_GL15A_HD189_v30_onlynoise_onlyH2O-VMR3-T900_rotated3000_deleteord_normalized.pkl' 
+REP_DATA = pipeline_rep
+filename  = 'Simu_GL15A_HD189_Kp120_v30_onlyH2O-VMR3-T900_reduced.pkl' 
 
 #Directory of your reduced model
-dire_mod = "/home/florian/Bureau/Atmosphere_SPIRou/Models/GL15A/HD189/reducedGL15A_HD189_onlyH2O-VMR3-T900_small/"
+dire_mod = pipeline_rep+"Data_Simulator/Model/Results/to-correl/reducedGL15A_HD189_onlyH2O-VMR3-T900/"
 
 #Kp intervals and size
-Kpmin = 50.0
-Kpmax =250.0
-Nkp = 41
+Kpmin = 20.0
+Kpmax =220.0
+Nkp = 21
 Kp = np.linspace(Kpmin,Kpmax,Nkp)
 
 
 
 #Vsys intervals and size
-Vmin = -30
-Vmax= 30
-Nv = 61
+Vmin = 0
+Vmax= 60
+Nv = 31
 Vsys = np.linspace(Vmin,Vmax,Nv)
 
 
@@ -59,7 +62,7 @@ with open(REP_DATA+filename,'rb') as ccfile:
 list_ord = np.array(orders)
 list_ord = np.array(orders[:-1])
 
-#The data directory contains the data after reduction by  Baptiste's code
+#The data directory contains the data after reduction
 #THe mod directory contains the templates in ntwo columns : wl and (1-rp/Rs**2) normalised
 k  = 0
 for no in orders:
@@ -235,3 +238,4 @@ plt.figure()
 
 plt.contourf(Vsys,Kp,np.sum(np.sum(correl_boucher[:,:,sel],axis=3),axis=2)/snrmap,cmap="gist_heat",levels=20)
 plt.colorbar(label="SNR")
+plt.savefig(pipeline_rep+"Correlated.png")

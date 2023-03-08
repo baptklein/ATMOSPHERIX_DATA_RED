@@ -21,11 +21,14 @@ from plots import *
 import reduce_encoder as encoder
 
 
+pipeline_rep = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/ATMOSPHERIX_DATA_RED/"
+
+
 ### Name of the picle file to read the data from
 
-filename = 'Simu_GL15A_2_HD189_multi-T900.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
-nam_fin  = 'reduced_data_2_nopca.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
-nam_info = "info.dat" ### Store main info about each order
+filename = pipeline_rep+'Simu_GL15A_HD189_Kp120_v30_onlyH2O-VMR3-T900.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1.pkl"
+nam_fin  = pipeline_rep+'Simu_GL15A_HD189_Kp120_v30_onlyH2O-VMR3-T900_reduced.pkl' #"/home/florian/Bureau/Atmosphere_SPIRou/Code_generator/Simu_HD189_SIMU_v30_1_encoder.pkl"
+nam_info = pipeline_rep+"info.dat" ### Store main info about each order
 
 ### Correction of stellar contamination
 ### Only used if synthetic spectrum available
@@ -79,7 +82,7 @@ auto_tune   = True                  ### Automatic tuning of number of components
 ### Plot info
 plot_red    = True
 numb        = 46
-nam_fig     = "reduc_" + str(numb) + "_jun19.png"
+nam_fig     = pipeline_rep+"Figures/reduc_" + str(numb) + "_jun19.png"
     
     
 ### Create order objects
@@ -279,7 +282,7 @@ print("PLOT METRICS")
 orders_fin   = np.delete(orders,ind_rem)
 list_ord_fin =  np.delete(list_ord,ind_rem)
 SN_fin = np.delete(SN,ind_rem,axis=0)
-nam_fig      = "spectrum_dispersion.png"
+nam_fig      = pipeline_rep+"Figures/spectrum_dispersion.png"
 plot_spectrum_dispersion(list_ord_fin,nam_fig)
 print("DONE\n")
 
