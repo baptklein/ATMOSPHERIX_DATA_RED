@@ -38,6 +38,8 @@ import time
       $ python read_data.py
       
   If you only do that however you will not have a planet in your data as GL 15A has no known transiting planets.  You can instead add a synthetic HD 189733 with a temperature of 900K and a water VMR of 0.001 using the Jupyter notebook in Data_Simulator, that loads the Model in Data_Simulator/Model/Results/. Both methods (read_data or main.ipynb) will give you a pkl file to use in the following.
+  
+  Instead of reading point 2, 3 and 4 you can also keep using the notebook until the correlation part (that does not work in the notebook). It uses an old version of the data pipeline but shows you graphically all the steps.
       
 
 2. Data reduction process: change parameters in "reduce_data.py" and run
