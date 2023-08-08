@@ -74,7 +74,6 @@ def load_data(filename):
             mod = np.loadtxt(file_mod,skiprows=5)
             
         # mod = mod[::3]
-    
         Std = np.zeros(np.shape(I_data[k])[1])
         for i in range(np.shape(I_data[k])[1]):
             Std[i] = (np.std(I_data[k][:,i]))
@@ -282,17 +281,17 @@ def plot_correlation(list_ord,correl_boucher):
     """ 
     
     sel = []
-    if not select_plot:
-        lili = list_ord
-    k=-1
-    for no in lili:
-        k+=1
-        try:
-            sel = sel +[ np.where(list_ord==no)[0][0]]
-        except:
-            continue
-
-    correl_summed = np.sum(np.sum(correl_boucher[:,:,sel],axis=3),axis=2)
+    if select_plot:
+        k=-1
+        for no in lili:
+            k+=1
+            try:
+                sel = sel +[ np.where(list_ord==no)[0][0]]
+            except:
+                continue
+        correl_summed += np.sum(np.sum(correl_boucher[:,:,sel],axis=3),axis=2)
+    else:
+        correl_summed += np.sum(np.sum(correl_boucher,axis=3),axis=2)
 
     
     
@@ -324,7 +323,82 @@ def plot_correlation(list_ord,correl_boucher):
             
 
 
+  
+def plot_correlation_tot(list_tot,correl_tot):
+    """
+    Plot correlation results.
+
+    Parameters:
+
+    correl_boucher (ndarray): Correlation results.
+    list_ord (list): List of order numbers.
+
+    
+    Global parameters:
+    Kp (ndarray): Orbital semi-amplitude.
+    Vsys (ndarray): Systemic velocity.
+    
+    lili (list or ndarray, optional): List of orders to plot correlation. 
+    select_plot (boolean): Do we use lili or list_ord ?
+    Kp_min_std (float): Minimum orbital semi-amplitude for standard deviation mask.
+    Kp_max_std (float): Maximum orbital semi-amplitude for standard deviation mask.
+    Vsys_min_std (float): Minimum systemic velocity for standard deviation mask.
+    Vsys_max_std (float): Maximum systemic velocity for standard deviation mask.
+    Vsys_planet (float): Systemic velocity of the planet.
+    Kpmin (float): Minimum orbital semi-amplitude for lines.
+    Kpmax (float): Maximum orbital semi-amplitude for lines.
+    Vmin (float): Minimum systemic velocity for lines.
+    Vmax (float): Maximum systemic velocity for lines.
+    Kp_planet (float): Orbital semi-amplitude of the planet.
+    white_lines (bool, optional): Whether to plot white lines at the position of the planet.
+    nlevels (int): Number of contour levels for the plot.
+    """ 
+    
+    correl_summed = np.zeros((Nkp,Nv))
+
+    for i in range(len(correl_tot)):
+        sel = []
+        if select_plot:
+            k=-1
+            for no in lili:
+                k+=1
+                try:
+                    sel = sel +[ np.where(list_tot[i]==no)[0][0]]
+                except:
+                    continue
+            correl_summed += np.sum(np.sum(correl_tot[i][:,:,sel],axis=3),axis=2)
+        else:
+            correl_summed += np.sum(np.sum(correl_tot[i],axis=3),axis=2)
+
+    
+    
+    mask_std = np.ones((Nkp,Nv),dtype=bool)
+    for i in range(Nkp):
+        for j in range(Nv):
+            if ((Kp[i]>Kp_min_std and Kp[i]<Kp_max_std) and (Vsys[j]>Vsys_min_std and Vsys[j]<Vsys_max_std)):
+                mask_std[i,j] = False
+    c = correl_summed[mask_std]
+    snrmap = np.std((c))
+    
+    #
+    plt.figure()
+    
+    # Same as above: uncomment first or second line
+    
+    plt.contourf(Vsys,Kp,correl_summed/snrmap,cmap="gist_heat",levels=nlevels)
         
+    plt.colorbar(label="SNR")
+
+    plt.xlabel("Doppler shift (km.s$^{-1}$)")
+    plt.ylabel("Orbital semi amplitude (km.s$^{-1}$)")
+    
+    if white_lines:
+        plt.plot([Vsys_planet,Vsys_planet],[Kpmin,Kpmax],'--',color='white')
+        plt.plot([Vmin,Vmax],[Kp_planet,Kp_planet],'--',color='white')
+        
+    plt.show()
+            
+      
         
 
 

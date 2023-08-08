@@ -24,19 +24,21 @@ weights= np.ones(15)
 #Kp intervals
 Kpmin = 0.0
 Kpmax =300.0
-Nkp = 21
+Nkp = 61
 Kp = np.linspace(Kpmin,Kpmax,Nkp)
 
 #Vsys intervals
-Vmin = 0
-Vmax= 60
-Nv = 21
+Vmin = -150
+Vmax= 150
+Nv = 301
 Vsys = np.linspace(Vmin,Vmax,Nv)
 
 #Number of pkl observations files and their names
-num_obs = 1
+num_obs = 2
 pipeline_rep = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/"
-file_list = [pipeline_rep+"test_nonorm.pkl",]
+file_list = [pipeline_rep+"test_new.pkl",]
+file_list = ["/home/florian/Bureau/Atmosphere_SPIRou/Data/HD189/pkl/reduced/DRS_06_0721/Jun19/"+"HD189_Jun19_new-pipeline_boucher05_autoPCA-1.pkl",\
+             "/home/florian/Bureau/Atmosphere_SPIRou/Data/HD189/pkl/reduced/DRS_06_0721/Sep18/"+"HD189_Sep18_new-pipeline_boucher05_autoPCA-1.pkl"]
 
 
 dire_mod = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/Data_Simulator/Model/Results/to-correl/reducedGL15A_HD189_onlyH2O-VMR3-T900/"
@@ -45,8 +47,8 @@ dire_mod = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/Data_Simulator/M
 #DO we select orders or take them all ? If True, provide your order selection
 # for each observation. If an order does not exist in the pkl file, it will 
 # obivously not be used but will not trigger an error.
-select_ord =False
-list_ord1 = [31,32,33,34]
+select_ord = True
+list_ord1 = np.arange(32,80)
 
 #If false, the calculation is performed over the whole dataset. If 
 #True, we only select observation that have a transit window > min_window
@@ -87,8 +89,10 @@ Vsys_max_std = 40
 #number of levels in the contour plot
 nlevels = 15
 
-#Do we plot the correlation map ?
-plot_ccf = True
+#Do we plot the correlation map at each obs ?
+plot_ccf_indiv = True
+#Do we plot the global correaltion map ? 
+plot_ccf_tot = True
 
 #Do we save the correlation file ? If yes, put as much files as there are observations
 save_ccf = False
@@ -96,8 +100,8 @@ filesave_list = [pipeline_rep+"correlated.pkl"]
 
 #Do we add white lines at the planet position ? 
 white_lines = True
-Kp_planet = 120
-Vsys_planet = 30
+Kp_planet = 151
+Vsys_planet = -4.5
 
 
 SMALL_SIZE = 28

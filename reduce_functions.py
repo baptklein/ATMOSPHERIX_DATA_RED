@@ -528,7 +528,7 @@ def get_transit_dates(wind):
 
 
     
-def tellurics_and_borders(O,nn,ind_rem): 
+def tellurics_and_borders(O): 
     ### First we identify strong telluric lines and remove the data within these lines -- see Boucher+2021
     W_cl,I_cl,A_cl =  O.remove_tellurics(dep_min,thres_up)
     
@@ -539,13 +539,8 @@ def tellurics_and_borders(O,nn,ind_rem):
     V_cl      = c0*(W_cl/O.W_mean-1.)    
         
     ### If the order does not contain enough points, it is discarded
-    if len(W_cl) < Npt_lim:
-        print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(W_cl)," pts remaining)")
-        print("DISCARDED\n")
-        ind_rem.append(nn)
-    else:
-        print(len(O.W_raw)-len(W_cl),"pts removed from order",O.number,"(",O.W_mean,"nm) -- OK")
-    return W_cl,I_cl,A_cl,V_cl,ind_rem
+
+    return W_cl,I_cl,A_cl,V_cl
         
 
 # -----------------------------------------------------------
@@ -673,11 +668,11 @@ def apply_PCA(O):
             inver = np.linalg.pinv(principalComponents)
             proj = np.matmul(principalComponents,inver)
         except:
-            proj = np.zeros((len(ff),len(ff)))
+            proj = np.zeros(O.I_fin.shape)
     else:
         print("O PCA components discarded")
         I_pca = O.I_fin
-        proj  = np.zeros((len(ff),len(ff)))
+        proj  = np.zeros(O.I_fin.shape)
 
     return I_pca,proj
                 
