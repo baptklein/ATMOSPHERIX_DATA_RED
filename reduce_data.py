@@ -49,12 +49,21 @@ file        = open(nam_info,"w")
 print("START DATA REDUCTION")
 for nn in range(nord):
     O         = list_ord[nn]
-    if  O.number in ind_rem:
+    
+    if  nn in ind_rem:
         continue
     
     print("ORDER",O.number)
     #Start by Boucher+21 telluric correction, + remove some extreme points
-    O.W_cl,O.I_cl,O.A_cl,O.V_cl,ind_rem = red_func.tellurics_and_borders(O,nn,ind_rem)
+    O.W_cl,O.I_cl,O.A_cl,O.V_cl = red_func.tellurics_and_borders(O)
+    
+    #if not enough points, we discard
+    if len(O.W_cl) < Npt_lim:
+        print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(O.W_cl)," pts remaining)")
+        print("DISCARDED\n")
+        ind_rem.append(nn)
+        continue
+
     
     #Do we include stellar correction a la Brogi ?
     if corr_star:
@@ -68,6 +77,14 @@ for nn in range(nord):
     ### Correct for bad pixels
     O.W_norm2,O.I_norm2= O.filter_pixel(O.W_norm1,O.I_norm1,deg_px,sig_out)
 
+    if len(O.W_norm2) < Npt_lim:
+        print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(O.W_norm2)," pts remaining)")
+        print("DISCARDED\n")
+        ind_rem.append(nn)
+        continue
+    else:
+        print(len(O.W_raw)-len(O.W_norm2),"pts removed from order",O.number,"(",O.W_mean,"nm) -- OK")
+        
 
     #DO we detrend airmass ? 
     if det_airmass:
@@ -78,7 +95,7 @@ for nn in range(nord):
         
         
     #IF we have some weird orders, we rather delete them
-    XX    = np.where(np.isnan(O.I_fin[0]))[0]
+    XX    = np.where(np.isnan(np.log(O.I_fin+1)))[0]
     if len(XX) > 0:
         print("ORDER",O.number,"intractable: DISCARDED\n")
         ind_rem.append(nn)

@@ -14,6 +14,7 @@ if parallel:
 
 
 correl_tot = []
+list_ord_tot = []
 #we loop here over the number of observations
 for nobs in range(num_obs):
     filename = file_list[nobs]
@@ -83,9 +84,10 @@ for nobs in range(num_obs):
         # On the root process, assemble the final correl_tot
         if rank == 0:
             for i in range(size):
-                correl_tot.append(correl_boucher[i])
+                correl_tot.append(correl_boucher)
+                list_ord_tot.append(list_ord)
             #plot if you want it
-            if plot_ccf: 
+            if plot_ccf_indiv: 
                 corr_func.plot_correlation(list_ord,correl_boucher)
             #save if you want it
             if save_ccf:
@@ -106,9 +108,11 @@ for nobs in range(num_obs):
                                                        projtot, Stdtot, SNRtot, F2D, \
                                                        phase2, window2, Vstar,pos)
         correl_tot.append(correl_boucher)
+        list_ord_tot.append(list_ord)
+
         print("time elapsed:", time.time()-start_time)
         #plot if you want it
-        if plot_ccf: 
+        if plot_ccf_indiv: 
             corr_func.plot_correlation(list_ord,correl_boucher)
         #save if you want it !
         if save_ccf:
@@ -119,7 +123,15 @@ for nobs in range(num_obs):
             print("DONE")
 
         
-
+if plot_ccf_tot:
+    if len(correl_tot)>1:
+        if parallel:
+            comm = MPI.COMM_WORLD
+            rank = comm.Get_rank()
+            if rank ==0:
+                corr_func.plot_correlation_tot(list_ord_tot,correl_tot)
+        else:
+            corr_func.plot_correlation_tot(list_ord_tot,correl_tot)
 
         
         
