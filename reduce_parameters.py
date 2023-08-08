@@ -1,18 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Aug  7 11:48:34 2023
-
-@author: florian
-"""
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on 03/2022 12:54:11 2021
-
-@author: Baptiste & Florian
-"""
 import numpy as np
 
 
@@ -20,10 +5,8 @@ pipeline_rep = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/"
 
 ### Name of the picle file to read the data from
 filename = pipeline_rep+'test_withp.pkl'
-filename = "/home/florian/Bureau/Atmosphere_SPIRou/Data/HD189/pkl/readfits/DRS_06_0721/Jun19/"+"HD189_Jun19_new-pipeline.pkl"
 #output file
 nam_fin  = pipeline_rep+'test_new.pkl' 
-nam_fin = "/home/florian/Bureau/Atmosphere_SPIRou/Data/HD189/pkl/reduced/DRS_06_0721/Jun19/"+"HD189_Jun19_new-pipeline_boucher05_autoPCA-1.pkl"
 #information file
 nam_info = pipeline_rep+"info.dat"
 
@@ -35,7 +18,7 @@ WC_name    = ""            ### Input wavelength for synthetic stellar spectra
 IC_name    = ""            ### Input flux for synthetic stellar spectra
 
 ### Additional Boucher correction. If dep_min >=1, not included. 
-dep_min  = 0.5  # remove all data when telluric relative absorption > 1 - dep_min
+dep_min  = 1.0  # remove all data when telluric relative absorption > 1 - dep_min
 thres_up = 0.05      # Remove the line until reaching 1-thres_up
 Npt_lim  = 800      # If the order contains less than Npt_lim points, it is discarded from the analysis
 
