@@ -289,9 +289,9 @@ def plot_correlation(list_ord,correl_boucher):
                 sel = sel +[ np.where(list_ord==no)[0][0]]
             except:
                 continue
-        correl_summed += np.sum(np.sum(correl_boucher[:,:,sel],axis=3),axis=2)
+        correl_summed = np.sum(np.sum(correl_boucher[:,:,sel],axis=3),axis=2)
     else:
-        correl_summed += np.sum(np.sum(correl_boucher,axis=3),axis=2)
+        correl_summed = np.sum(np.sum(correl_boucher,axis=3),axis=2)
 
     
     
