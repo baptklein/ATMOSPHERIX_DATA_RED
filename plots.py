@@ -17,8 +17,8 @@ import matplotlib.ticker as ticker
 import warnings
 import matplotlib.cbook
 warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
-from functions import *
 
+from scipy.optimize import minimize
 
 
 
@@ -170,3 +170,55 @@ def plot_reduction(phase,W1,I1,W2,I2,W3,I3,W4,I4,lab=["1","2","3","4"],filenam="
     plt.savefig(filenam,bbox_inches="tight")
     #plt.show()
     plt.close()
+
+
+# -----------------------------------------------------------
+# Compute Order to mean wavelength equivalence 
+# Usage: Plot order number as X-axis and mean wavelengths as Y axis
+# In practice: fits an hyperbola between order nb and mean wavelength
+# See function plots.plot_orders for more information
+# -----------------------------------------------------------
+def fit_order_wave(LO,wm_fin):
+
+    """
+    --> Inputs:     - LO: list of order numbers
+                    - wm_fin: list of the mean wavelengths corresponding to LO
+
+    --> Outputs:    - WW: Wavelength ticks for the plot
+                    - LO_pred: order numbers corresponding to WW
+                    - LO_predt: densely-sampled list of orders for minor ticks locators
+    """
+
+    par0    = np.array([100000,200.0],dtype=float) 
+    res     = minimize(crit_hyp,par0,args=(LO,wm_fin))
+    p_best  = res.x 
+    LO_tot  = np.arange(29,81)
+    pp      = hyp(p_best,LO_tot)
+    WWT      = np.linspace(2400,900,16)
+    WW       = np.array([2400.0,2100,1800,1500,1200,1000],dtype=int)
+    LO_predt = hyp_inv(p_best,WWT)
+    LO_pred  = hyp_inv(p_best,WW) 
+    return WW,LO_pred,LO_predt
+
+
+# -----------------------------------------------------------
+# Simple hyperbola
+# -----------------------------------------------------------
+def hyp(par,xx):
+    return par[0]/xx + par[1]
+
+# --------------------
+# Simple inverse hyperbola
+# -----------------------------------------------------------
+def hyp_inv(par,yy):
+    return par[0]/(yy-par[1])
+
+# ----------------------------------# -----------------------------------------------------------
+# Return least-square difference between a hyperbola for 'par' 
+# parameters and data yy.
+# xx is the X-axis vector 
+# -----------------------------------------------------------
+def crit_hyp(par,xx,yy):
+    y_pred = hyp(par,xx)
+    return np.sum((yy-y_pred)**(2))  
+    
