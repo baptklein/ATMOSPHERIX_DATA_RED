@@ -15,7 +15,7 @@ import time
 import plots
 import reduce_encoder as encoder
 
-from reduce_parameters import *
+from reduce_parameters_WASP127 import *
 import reduce_functions as red_func
 
 
@@ -55,58 +55,38 @@ for nn in range(nord):
     
     print("ORDER",O.number)
     #Start by Boucher+21 telluric correction, + remove some extreme points
-    O.W_cl,O.I_cl,O.A_cl,O.V_cl = red_func.tellurics_and_borders(O,dep_min,thres_up,N_bor)
+    O.W_tell,O.I_tell,O.A_cl,O.V_cl = red_func.tellurics_and_borders(O,dep_min,thres_up,N_bor)
     
     #if not enough points, we discard
-    if len(O.W_cl) < Npt_lim:
+    if len(O.W_tell) < Npt_lim:
         print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(O.W_cl)," pts remaining)")
         print("DISCARDED\n")
         ind_rem.append(nn)
         continue
 
-    
-    #Do we include stellar correction a la Brogi ?
-    if corr_star:
-        O.I_cl  = red_func.stellar_from_file(O,nn,IC_name,WC_name,V_corr,sig_g,thres_up)
-        
-    #Delete master out of trnasit spectrum, in stellar and telluric fram
-    O.W_sub, O.I_sub = O.master_out(V_corr,n_ini,n_end,sig_g,N_bor)
-    
-    #high pass filter: suppress modal noise
-    O.W_norm1,O.I_norm1 = O.normalize(O.W_sub,O.I_sub,N_med,sig_out,N_adj,N_bor)
-    ### Correct for bad pixels
-    O.W_norm2,O.I_norm2= O.filter_pixel(O.W_norm1,O.I_norm1,deg_px,sig_out)
+    O.I_tell += 1
 
-    if len(O.W_norm2) < Npt_lim:
-        print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(O.W_norm2)," pts remaining)")
-        print("DISCARDED\n")
-        ind_rem.append(nn)
-        continue
-    else:
-        print(len(O.W_raw)-len(O.W_norm2),"pts removed from order",O.number,"(",O.W_mean,"nm) -- OK")
         
-
-    #DO we detrend airmass ? 
-    if det_airmass:
-        O.I_fin = red_func.airmass_correction(O,airmass,deg_airmass)
-    else:
-        O.I_fin= O.I_norm2
-    O.W_fin  = O.W_norm2
-        
-        
-    #IF we have some weird orders, we rather delete them
-    XX    = np.where(np.isnan(np.log(O.I_fin)))[0]
+    # IF we have some weird orders, we rather delete them
+    XX    = np.where(np.isnan(np.log(O.I_tell)))[0]
     if len(XX) > 0:
         print("ORDER",O.number,"intractable: DISCARDED\n")
         ind_rem.append(nn)
         continue
     
+    #remove one pca component to calculate how many we need to remove actually, because else the white noise map has troubles
+    O.n_com = 1
+    O.I_fin = O.I_tell
+    O.W_fin = O.W_tell
+    O.I_fin, temp = red_func.apply_PCA(O,mode_norm_pca,wpca)
+    
     #PCA commands
     if mode_pca =="pca":
         if auto_tune:
-            O.n_com = O.tune_pca(mode_norm_pca,factor_pca,Nmap=5)
+            O.n_com = O.tune_pca(mode_norm_pca,factor_pca,Nmap=5)+1
         else:
             O.n_com = npca[nn]  
+        O.I_fin = O.I_tell
         O.I_pca, O.proj = red_func.apply_PCA(O,mode_norm_pca,wpca)
     
     #Auto encoder
@@ -123,23 +103,13 @@ for nn in range(nord):
     red_func.calculate_final_metrics(O,N_px,file)
         
 
-    #we can plot stuffs
-    if plot_red == True and O.number == numb:
-        print("Plot data reduction steps")
-        lab = ["Blaze-corrected spectra","Median-corrected spectra","Normalised spectra","PCA-corrected spectra"]
-        plots.plot_reduction(phase,O.W_cl,O.I_cl-O.I_cl.mean(),O.W_sub,O.I_sub-1.,O.W_fin,O.I_fin,O.W_fin,O.I_pca,lab,nam_fig)        
+    O.W_fin2,O.I_pca2= O.filter_pixel(O.W_fin,O.I_pca,deg_px,sig_out)
 
 file.close()        
 
 list_ord_fin =  np.delete(list_ord,ind_rem)
 SN_fin = np.delete(SN,ind_rem,axis=0)
 
-
-if plot_red == True:
-    print("PLOT METRICS")
-    plots.plot_spectrum_dispersion(list_ord_fin,nam_fig)
-
-    
 
 ### Save data for correlation
 print("\nData saved in",nam_fin)
@@ -152,8 +122,8 @@ for nn in range(len(list_ord)):
         continue
     else:
         O  = list_ord[nn]
-        WW.append(O.W_fin)
-        Iend.append(O.I_pca)
+        WW.append(O.W_fin2)
+        Iend.append(O.I_pca2)
         projtot.append(O.proj)
         orders_fin.append(O.number)
 orders_fin = np.array(orders_fin)

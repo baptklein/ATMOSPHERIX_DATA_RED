@@ -13,9 +13,10 @@ import scipy.signal
 from scipy import stats
 import pickle
 import time
-from correlate_parameters import *
 
-def load_data(filename):
+c0 = 299792.458
+
+def load_data(filename,select_ord,list_ord1,dire_mod):
     """
     Load data from a pkl reduced data file. 
 
@@ -97,7 +98,7 @@ def load_data(filename):
     
     return list_ord,wl,data_tot,phase,window,Stdtot,SNRtot,projtot,F,Vc,berv
 
-def interpolate_model(F,wl,Vtot):
+def interpolate_model(F,wl,Vtot,pixel_window,weights):
     """
     Interpolate model spectra for each order over a range of velocity shifts.
 
@@ -128,7 +129,7 @@ def interpolate_model(F,wl,Vtot):
     return F2D
 
 
-def interpolate_model_parallel(F_proc,wl_proc,Vtot):
+def interpolate_model_parallel(F_proc,wl_proc,Vtot,pixel_window,weights):
     """
     Interpolate model spectra in parallel for multiple orders. The difference with the 
     sequential function is that the interpolation is just done over the orders of interest
@@ -159,7 +160,8 @@ def interpolate_model_parallel(F_proc,wl_proc,Vtot):
     return F2D
 
 
-def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,window2,Vstar,pos):
+def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,window2,Vstar,pos,Kp,Vsys,nbor,\
+                        use_proj,proj_fast=True,mode_norm_pca="none"):
 
     """
     Perform correlation analysis between data and model spectra.
@@ -187,6 +189,8 @@ def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,windo
     Returns:
     correl_boucher (ndarray:) Correlation results.
     """
+    Nkp = len(Kp)
+    Nv = len(Vsys)
     correl_boucher= np.zeros((Nkp,Nv,len(list_ord),len(phase2)))
     for no in range(len(list_ord)):
         dataij = (data_tot[no][pos][:,nbor:-nbor].T-np.mean(data_tot[no][pos][:,nbor:-nbor].T,axis=0))
@@ -250,7 +254,8 @@ def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,windo
     return correl_boucher
 
 
-def plot_correlation(list_ord,correl_boucher):
+def plot_correlation(list_ord,correl_boucher,select_plot,lili,Kp,Vsys,\
+                     Kp_min_std,Kp_max_std,Vsys_min_std,Vsys_max_std,nlevels,white_lines=False,Kp_planet=0.0,Vsys_planet=0.0):
     """
     Plot correlation results.
 
@@ -279,7 +284,12 @@ def plot_correlation(list_ord,correl_boucher):
     white_lines (bool, optional): Whether to plot white lines at the position of the planet.
     nlevels (int): Number of contour levels for the plot.
     """ 
-    
+    Nkp = len(Kp)
+    Nv = len(Vsys)
+    Kpmin = np.min(Kp)
+    Kpmax = np.max(Kp)
+    Vmin = np.min(Vsys)
+    Vmax = np.max(Vsys)
     sel = []
     if select_plot:
         k=-1
@@ -324,7 +334,8 @@ def plot_correlation(list_ord,correl_boucher):
 
 
   
-def plot_correlation_tot(list_tot,correl_tot):
+def plot_correlation_tot(list_tot,correl_tot,select_plot,lili,Kp,Vsys,\
+                     Kp_min_std,Kp_max_std,Vsys_min_std,Vsys_max_std,nlevels,white_lines=False,Kp_planet=0.0,Vsys_planet=0.0):
     """
     Plot correlation results.
 
@@ -353,7 +364,12 @@ def plot_correlation_tot(list_tot,correl_tot):
     white_lines (bool, optional): Whether to plot white lines at the position of the planet.
     nlevels (int): Number of contour levels for the plot.
     """ 
-    
+    Nkp = len(Kp)
+    Nv = len(Vsys)
+    Kpmin = np.min(Kp)
+    Kpmax = np.max(Kp)
+    Vmin = np.min(Vsys)
+    Vmax = np.max(Vsys)
     correl_summed = np.zeros((Nkp,Nv))
 
     for i in range(len(correl_tot)):

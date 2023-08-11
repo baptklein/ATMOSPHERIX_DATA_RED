@@ -62,7 +62,7 @@ if plot:
     plt.figure(figsize=(15,12))
     # Transit flux
     ax  = plt.subplot(411)
-    ax.plot(TT,flux,"-+r",label="HD 189733 b analog")
+    ax.plot(TT,flux,"-+r",label="planet")
     plt.legend(loc=3,fontsize=16)
     ax.set_ylabel("Transit curve\n", labelpad=ypad)
     # Airmass
@@ -80,7 +80,7 @@ if plot:
     plt.xlabel("Time wrt transit [h]")
     ax.set_ylabel("Peak S/N\n", labelpad=ypad)
     plt.subplots_adjust(hspace=0.02)
-    plt.savefig("transit_info.pdf",bbox_inches="tight")
+    plt.savefig(dir_figures+"transit_info.pdf",bbox_inches="tight")
     plt.close()
     print("DONE")
 

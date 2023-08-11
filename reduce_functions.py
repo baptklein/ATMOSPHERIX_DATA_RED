@@ -3,7 +3,6 @@ from scipy.interpolate import interp1d
 from scipy.ndimage import median_filter
 from astropy.modeling import fitting, polynomial
 from astropy.stats import sigma_clip
-from reduce_parameters import *
 import pickle
 
 from sklearn.decomposition import PCA
@@ -216,11 +215,11 @@ class Order:
     
 
 
-    def master_out(self,V_corr,n_ini,n_end):      
+    def master_out(self,V_corr,n_ini,n_end,sig_g,N_bor):      
         ### If the order is kept - Remove high-SNR out-of-transit reference spectrum    
         ### Start by computing mean spectrum in the stellar rest frame
         I_bary    = move_spec(self.V_cl,self.I_cl,V_corr,sig_g)  ## Shift to stellar rest frame      
-        I_med     = np.median(np.concatenate((I_bary[:n_ini],I_bary[n_end:]),axis=0),axis=0) ## Compute median out-of-transit        
+        I_med     = np.median(np.concatenate((I_bary[:n_ini],I_bary[n_end:]),axis=0),axis=0) ## Compute median out-of-transit   
         I_med_geo = move_spec(self.V_cl,np.array([I_med]),-1.*V_corr,sig_g)  ## Move back ref spectrum to Geocentric frame
         I_sub1    = np.zeros(self.I_cl.shape)
         for kk in range(len(self.I_cl)):
@@ -475,7 +474,7 @@ class Order:
         pca.fit(x_pca)       
         var   = pca.explained_variance_ratio_ 
 
-        ### Nb of components: larger than 2*max highenvalue
+        ### Nb of components: larger than factor*max highenvalue
         ncf   = len(np.where(var>factor*np.max(thres))[0])
 
         return ncf
@@ -528,14 +527,14 @@ def get_transit_dates(wind):
 
 
     
-def tellurics_and_borders(O): 
+def tellurics_and_borders(O,dep_min,thres_up,N_bor): 
     ### First we identify strong telluric lines and remove the data within these lines -- see Boucher+2021
     W_cl,I_cl,A_cl =  O.remove_tellurics(dep_min,thres_up)
     
     W_cl = W_cl[N_bor:-N_bor]
     I_cl = I_cl[:,N_bor:-N_bor]
     A_cl = A_cl[:,N_bor:-N_bor]
-    W_cl,I_cl = O.filter_pixel(W_cl,I_cl,deg_px,sig_out)
+    # W_cl,I_cl = O.filter_pixel(W_cl,I_cl,deg_px,sig_out)
     V_cl      = c0*(W_cl/O.W_mean-1.)    
         
     ### If the order does not contain enough points, it is discarded
@@ -549,25 +548,24 @@ def tellurics_and_borders(O):
 
 
 
-def stellar_from_file(O,nn):        
+def stellar_from_file(O,nn,IC_name,WC_name,V_corr,sig_g,thres_up):        
        
     ### Correction of stellar contamination (RM and center-to-limb variations)
-    if corr_star:
-        IS_corr = np.load(IC_name)
-        WS_corr = np.load(WC_name)
-        VS_corr = c0*(WS_corr/O.W_mean-1.)  
-        
-        if (WS_corr.min()>=W_cl.max()) or (WS_corr.max()<=W_cl.min()):
-            print("No stellar correction available for order:",nn) 
-            return O.I_cl
-        else:
-            cov = 100.*(WS_corr.max() - WS_corr.min())/(O.W_cl.max()-O.W_cl.min())
-            print("STELLAR CORRECTION: [",WS_corr.min(),",",WS_corr.max(),"]")
-            print("Order wavelengths: [",O.W_cl.min(),",",O.W_cl.max(),"] - Coverage:",round(cov,1),"%")
-            return O.correct_star(VS_corr,IS_corr,V_corr,O.A_cl,thres_up,sig_g)
-
-            
+    IS_corr = np.load(IC_name)
+    WS_corr = np.load(WC_name)
+    VS_corr = c0*(WS_corr/O.W_mean-1.)  
     
+    if (WS_corr.min()>=O.W_cl.max()) or (WS_corr.max()<=O.W_cl.min()):
+        print("No stellar correction available for order:",nn) 
+        return O.I_cl
+    else:
+        cov = 100.*(WS_corr.max() - WS_corr.min())/(O.W_cl.max()-O.W_cl.min())
+        print("STELLAR CORRECTION: [",WS_corr.min(),",",WS_corr.max(),"]")
+        print("Order wavelengths: [",O.W_cl.min(),",",O.W_cl.max(),"] - Coverage:",round(cov,1),"%")
+        return O.correct_star(VS_corr,IS_corr,V_corr,O.A_cl,thres_up,sig_g)
+
+        
+
 # -----------------------------------------------------------
 # Move spectra from one frame to another
 # -----------------------------------------------------------    
@@ -600,7 +598,7 @@ def move_spec(V,I,Vc,sig_g):
 
 
 
-def airmass_correction(O):        
+def airmass_correction(O,airmass,deg_airmass):        
     I_log           = np.log(O.I_norm2)
     I_det_log       = O.detrend_airmass(O.W_norm2,I_log,airmass,deg_airmass)
     I_det           = np.exp(I_det_log)
@@ -608,16 +606,8 @@ def airmass_correction(O):
 
 
 
-def prepare_PCA(O):
-        ### STEP 4 -- REMOVING CORRELATED NOISE -- PCA/AUTOENCODERS
-        if mode_pca == "pca" :
-            if auto_tune: n_com = O.tune_pca(mode_norm_pca,factor_pca,Nmap=5)
-            else: n_com = npca[nn]  
-        else:
-            n_com = 0
-        return n_com
-    
-def apply_PCA(O):
+
+def apply_PCA(O,mode_norm_pca,wpca):
     if O.n_com > 0:
         Il    = np.log(O.I_fin)
         
@@ -726,7 +716,7 @@ def poly_fit(x,y,deg,sig,n_iter=3):
     return fitted_model,filtered_data
 
 
-def calculate_final_metrics(O,file):
+def calculate_final_metrics(O,N_px,file):
     ### ESTIMATES FINAL METRICS
     indw          = np.argmin(np.abs(O.W_fin-O.W_fin.mean())) 
     O.SNR_mes     = 1./np.std(O.I_fin[:,indw-N_px:indw+N_px],axis=1) 
