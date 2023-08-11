@@ -20,12 +20,11 @@ for nobs in range(num_obs):
     filename = file_list[nobs]
     
     #first we read the data
-    list_ord,wl,data_tot,phase,window,Stdtot,SNRtot,projtot,F,Vc,berv = corr_func.load_data(filename)
-
+    list_ord,wl,data_tot,phase,window,Stdtot,SNRtot,projtot,F,Vc,berv = corr_func.load_data(filename,select_ord,list_ord1,dire_mod)
     #then we create an interpolation array of speed
     Vstarmax = np.max(np.abs(np.array(Vc)-np.array(berv)))
     Vint_max = np.max(Kpmax*np.abs(np.sin(2.0*np.pi*np.array(phase))))+np.max(np.abs([Vmin,Vmax]))+Vstarmax
-    Vtot = np.linspace(-1.01*Vint_max,1.01*Vint_max,int_speed*int(Vint_max))
+    Vtot = np.linspace(-1.02*Vint_max,1.02*Vint_max,int_speed*int(Vint_max))
     
     Vstar = np.array(Vc)-np.array(berv)
 
@@ -56,7 +55,7 @@ for nobs in range(num_obs):
         print('rank = ',rank, " and orders = ",orders_to_process)
         
         #Create interpolation on the processor
-        F2D = corr_func.interpolate_model_parallel(F[start_order:end_order+1], wl[start_order:end_order+1], Vtot)
+        F2D = corr_func.interpolate_model_parallel(F[start_order:end_order+1], wl[start_order:end_order+1], Vtot,pixel_window,weights)
         
         #Calculate the correlation
         correl_boucher_subset = corr_func.perform_correlation(orders_to_process,\
@@ -64,7 +63,9 @@ for nobs in range(num_obs):
                                                    projtot[start_order:end_order+1],\
                                                    Stdtot[start_order:end_order+1],\
                                                    SNRtot[start_order:end_order+1],\
-                                                   F2D, phase2, window2, Vstar,pos)
+                                                   F2D, phase2, window2, Vstar,pos, \
+                                                   Kp,Vsys,nbor,use_proj,proj_fast,mode_norm_pca)
+
 
         comm.Barrier()  # Synchronize processes
         #gather the resuls on the root process
@@ -88,7 +89,9 @@ for nobs in range(num_obs):
                 list_ord_tot.append(list_ord)
             #plot if you want it
             if plot_ccf_indiv: 
-                corr_func.plot_correlation(list_ord,correl_boucher)
+                corr_func.plot_correlation(list_ord,correl_boucher,select_plot,lili,Kp,Vsys,\
+                                     Kp_min_std,Kp_max_std,Vsys_min_std,Vsys_max_std,nlevels,\
+                                     white_lines,Kp_planet,Vsys_planet)
             #save if you want it
             if save_ccf:
                 filesave = filesave_list[nobs]
@@ -101,19 +104,22 @@ for nobs in range(num_obs):
     else:      
         start_time = time.time()
         #Interpolate the models on the speed array
-        F2D = corr_func.interpolate_model(F,wl,Vtot)
+        F2D = corr_func.interpolate_model(F,wl,Vtot,pixel_window,weights)
         
         #And now the correlation, following boucher
         correl_boucher = corr_func.perform_correlation(list_ord, data_tot, \
                                                        projtot, Stdtot, SNRtot, F2D, \
-                                                       phase2, window2, Vstar,pos)
+                                                       phase2, window2, Vstar,pos,\
+                                                       Kp,Vsys,nbor,use_proj,proj_fast,mode_norm_pca)
         correl_tot.append(correl_boucher)
         list_ord_tot.append(list_ord)
 
         print("time elapsed:", time.time()-start_time)
         #plot if you want it
         if plot_ccf_indiv: 
-            corr_func.plot_correlation(list_ord,correl_boucher)
+            corr_func.plot_correlation(list_ord,correl_boucher,select_plot,lili,Kp,Vsys,\
+                                 Kp_min_std,Kp_max_std,Vsys_min_std,Vsys_max_std,nlevels,\
+                                 white_lines,Kp_planet,Vsys_planet)
         #save if you want it !
         if save_ccf:
             filesave = filesave_list[nobs]
@@ -129,9 +135,13 @@ if plot_ccf_tot:
             comm = MPI.COMM_WORLD
             rank = comm.Get_rank()
             if rank ==0:
-                corr_func.plot_correlation_tot(list_ord_tot,correl_tot)
+                corr_func.plot_correlation_tot(list_ord_tot,correl_tot,select_plot,lili,Kp,Vsys,\
+                                     Kp_min_std,Kp_max_std,Vsys_min_std,Vsys_max_std,nlevels,\
+                                     white_lines,Kp_planet,Vsys_planet)
         else:
-            corr_func.plot_correlation_tot(list_ord_tot,correl_tot)
+            corr_func.plot_correlation_tot(list_ord_tot,correl_tot,select_plot,lili,Kp,Vsys,\
+                                 Kp_min_std,Kp_max_std,Vsys_min_std,Vsys_max_std,nlevels,\
+                                 white_lines,Kp_planet,Vsys_planet)
 
         
         
