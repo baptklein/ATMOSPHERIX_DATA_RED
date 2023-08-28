@@ -499,7 +499,7 @@ def read_data_and_create_list(filename):
         O.W_mean = O.W_raw.mean()
         list_ord.append(O)
     print("DONE\n")
-    return T_obs,phase,window,berv,vstar,SN,list_ord
+    return T_obs,phase,window,berv,vstar,airmass,SN,list_ord
 
 def get_transit_dates(wind):
 
