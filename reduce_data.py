@@ -21,7 +21,7 @@ import reduce_functions as red_func
 
 
 #We sstart by initializing the data
-T_obs,phase,window,berv,vstar,SN,list_ord= red_func.read_data_and_create_list(filename)
+T_obs,phase,window,berv,vstar,airmass,SN,list_ord= red_func.read_data_and_create_list(filename)
 #Create a list of orders to remove
 nord = len(list_ord)
 ind_rem = []
