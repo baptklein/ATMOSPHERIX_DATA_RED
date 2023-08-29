@@ -8,6 +8,7 @@ Requirements: Python 3 modules
 - sklearn: https://scikit-learn.org/
 - batman: https://lweb.cfa.harvard.edu/~lkreidberg/batman/ . Be very careful !!! Don't do pip install batman but pip install batman-package
 - astropy
+- wpca (not necessary but recommended)
 
 If you want to run the nested sampling algorithm, you will also need pymultinest (and necessarily multinest). We refer you to pymultinest documentation: https://johannesbuchner.github.io/PyMultiNest/) 
 
