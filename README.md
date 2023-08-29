@@ -35,27 +35,25 @@ import time
    
   To apply the code, change the paramters in the file "read_data.py" and type the following command line:
     
-      $ python read_data.py
+      $ python read_parameters.py
       
   If you only do that however you will not have a planet in your data as GL 15A has no known transiting planets.  You can instead add a synthetic HD 189733 with a temperature of 900K and a water VMR of 0.001 using the Jupyter notebook in Data_Simulator, that loads the Model in Data_Simulator/Model/Results/. Both methods (read_data or main.ipynb) will give you a pkl file to use in the following.
   
   Instead of reading point 2, 3 and 4 you can also keep using the notebook until the correlation part (that does not work in the notebook). It uses an old version of the data pipeline but shows you graphically all the steps.
       
 
-2. Data reduction process: change parameters in "reduce_data.py" and run
+2. Data reduction process: change parameters in "reduce_parameters.py" and run
 
       $ python reduce_data.py
    
    
 3. Compute the correlation between the data and model for a grid of planet velocimetric semi-amplitude and systemic velocity:
 
-  Change parameters in "get_correl.py" and run
+  Change parameters in "correlate_parameters.py" and run
   
-    $ python get_correl.py
-    
-  WARNING: get_correl is much worse than Correlate.py but more user friendly. If you have time or are one of Florian's interns, use Correlate.
-  
+    $ python correlate.py
+      
   This will use the templates in Data_Simulator/Model/results/to-correl, created by the file create_templates in Template_generator. If you wish to use different planets you will obviously need to create new templates. 
  
 
-4. The instructions to run the nested sampling are in the multinest_atmo folder. Have fun !!
+4. The instructions to run the nested sampling are in the multinest_atmo folder, but are not up to date yet. Don't hesitate to contact us. Have fun !!
