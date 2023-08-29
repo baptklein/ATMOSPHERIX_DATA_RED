@@ -23,9 +23,9 @@ If you want to run the nested sampling algorithm, you will also need pymultinest
   Test case: You can download observations of Gl 15 A and the associated models via the following repository:
   https://drive.google.com/drive/folders/1CHupP3I4r6bzJgUoblpmi8SKpEQvRnEs?usp=sharing
    
-  To apply the code, change the paramters in the file "read_data.py" and type the following command line:
+  To apply the code, change the paramters in the file "read_parameters.py" and type the following command line:
     
-      $ python read_parameters.py
+      $ python read_data.py
       
   If you only do that however you will not have a planet in your data as GL 15A has no known transiting planets.  You can instead add a synthetic HD 189733 with a temperature of 900K and a water VMR of 0.001 using the Jupyter notebook in Data_Simulator, that loads the Model in Data_Simulator/Model/Results/. Both methods (read_data or main.ipynb) will give you a pkl file to use in the following.
   
