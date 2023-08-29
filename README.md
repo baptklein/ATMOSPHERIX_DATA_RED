@@ -12,17 +12,6 @@ Requirements: Python 3 modules
 
 If you want to run the nested sampling algorithm, you will also need pymultinest (and necessarily multinest). We refer you to pymultinest documentation: https://johannesbuchner.github.io/PyMultiNest/) 
 
-import numpy as np
-import sys
-import os
-import matplotlib.pyplot as plt
-import pickle
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.decomposition import FastICA
-import time
-
-
 
 ### To run the code:
 1. Going from a list of "t.fits" files to the format compatible with our data reduction code:
