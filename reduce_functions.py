@@ -658,11 +658,11 @@ def apply_PCA(O,mode_norm_pca,wpca):
             inver = np.linalg.pinv(principalComponents)
             proj = np.matmul(principalComponents,inver)
         except:
-            proj = np.zeros(O.I_fin.shape)
+            proj = np.zeros((len(O.I_fin),len(O.I_fin)))
     else:
-        print("O PCA components discarded")
+        print("0 PCA components discarded")
         I_pca = O.I_fin
-        proj  = np.zeros(O.I_fin.shape)
+        proj  = np.zeros((len(O.I_fin),len(O.I_fin)))
 
     return I_pca,proj
                 
