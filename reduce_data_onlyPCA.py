@@ -127,7 +127,7 @@ for nn in range(len(list_ord)):
         Iend.append(O.I_pca2)
         projtot.append(O.proj)
         orders_fin.append(O.number)
-        sorted_I = np.sort(np.mean(O.I_fin-1,axis=0))[:300]
+        sorted_I = np.sort(np.mean(O.I_fin-1,axis=0))[-300:]
         pix_flux = []
         for pix in sorted_I:
             pix_flux.append(np.where(np.mean(O.I_fin-1,axis=0)==pix)[0])
