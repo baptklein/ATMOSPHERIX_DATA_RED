@@ -19,7 +19,7 @@ We provide a sample of t.fits files for an observing sequence of GJ15A, as used 
 
 ### To run the code:
 The code is run by the main.py file, which can read, reduce and/or correl the data depending on your choice.
-You can also adda synthetic planet. 
+You can also inject a synthetic planet. 
 The parameters are in the parameters.py file. 
 
 To read the data you need to indicate the location of the t.fits file in the 
@@ -30,26 +30,17 @@ names in the parameter file. In detail, the "read" function:
     - Corrects for Blaze and remove NaNs from the observations
     - Computes orbital phase and transit window
     - Stores pre-processed data in ".pkl" files
-   
 
-
-  If you only do that however you will not have a planet in your data as GL 15A has no known transiting planets.  You can instead add a synthetic HD 189733 with a temperature of 900K and a water VMR of 0.001 using the Jupyter notebook in Data_Simulator, that loads the Model in Data_Simulator/Model/Results/. Both methods (read_data or main.ipynb) will give you a pkl file to use in the following.
-  
-  Instead of reading point 2, 3 and 4 you can also keep using the notebook until the correlation part (that does not work in the notebook). It uses an old version of the data pipeline but shows you graphically all the steps.
-      
-
-2. Data reduction process: change parameters in "reduce_parameters.py" and run
-
-      $ python reduce_data.py
+Regarding data reduction, all the parameters and what they do is detailed in both the parameters.py file 
+and most importantly in the ATMOSPHERIX 1 paper. At the end of the reduction process, datas are stored 
+in another pkl file that can either be used for correlation or multinest.
    
    
-3. Compute the correlation between the data and model for a grid of planet velocimetric semi-amplitude and systemic velocity:
-
-  Change parameters in "correlate_parameters.py" and run
-  
-    $ python correlate.py
-      
-  This will use the templates in Data_Simulator/Model/results/to-correl, created by the file create_templates in Template_generator. If you wish to use different planets you will obviously need to create new templates. 
+Finally, the correlation function computes the correlation between the data and model for a 
+grid of planet velocimetric semi-amplitude and systemic velocity. This function uses 
+the templates in Data_Simulator/Model/results/to-correl, created by the file create_templates in Template_generator. 
+If you wish to use different planets you will obviously need to create new templates. 
  
 
-4. The instructions to run the nested sampling are in the multinest_atmo folder, but are not up to date yet. Don't hesitate to contact us. Have fun !!
+The instructions to run the nested sampling are in the multinest_atmo folder, but are not up to date yet. 
+Don't hesitate to contact us. Have fun !!
