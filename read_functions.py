@@ -8,7 +8,7 @@ Created on 03/2022 12:54:11 2021
 import numpy as np
 import os
 from astropy.io import fits
-from scipy.interpolate import interp1d
+from scipy.interpolate import PchipInterpolator
 from global_parameters import c0, G
 
 import batman
@@ -251,16 +251,15 @@ class Order:
     #    input sequence of spectra by the synthetic sequence of transit
     #    depths
     # -----------------------------------------------------------
-    def add_planet(self,Wm,Im,window,phase,K_inj,V_inj,Vc,ampl=1.0,pixel=np.linspace(-1.13,1.13,11)):
+    def add_planet(self,type_obs,Wm,Im,window,planet_speed,Vc,ampl=1.0,pixel=np.linspace(-1.13,1.13,11)):
 
         """
         --> Inputs:      - Order object
+                         - type_obs (str) emission or tranmission
                          - Wm:      Wavelength vector of the planet atmosphere template
                          - Im:      Template of wavelength-dependent transit depth (i.e., model) 
                          - window:  Transit window
-                         - phase:   Vector of orbit phase
-                         - K_inj:   Semi-amplitude of the injected planet signature [km/s]
-                         - V_inj:   Planet radial velocity at mid-transit [km/s]
+                         - planet_speed : speed of the planet along the orbit
                          - Vc:      Velocimetric correction to move from Geocentric frame to stellar rest frame
                                     Typically: Vc = Stellar systemic vel. + planet-signature RV - Barycentric Earth RV 
                          - ampl:    Amplification factor: amplify the injected planetary signal
@@ -268,25 +267,33 @@ class Order:
         --> Outputs:     - self.I_raw_pl
         """
         self.Wm    = Wm
-        self.Im    = ampl*(Im-np.max(Im))+np.max(Im)
-        vp         = rvp(phase,K_inj,V_inj)     # Compute planet RV
+        self.Im    = ampl*(Im-np.max(Im))+np.max(Im)        
         self.I_syn = np.zeros(self.I_raw.shape)
 
-
+        Imm  = self.Im#/np.min(flux)
+        if type_obs =="transmission":
+            tdepth_interp     = PchipInterpolator(self.Wm,Imm)  # Interpolate model
+        else:
+            flux_interp = PchipInterpolator(self.Wm,Imm)  
+            
         for nn in range(len(self.I_raw)): # For each observation date
-        
-            Imm  = self.Im#/np.min(flux)
-        
-            if window[nn] != 0.0:
-                f     = interp1d(self.Wm,Imm,kind="linear")  # Interpolate model
+            if type_obs =="transmission":
+                if window[nn] != 0.0:
+                    I_ttt = np.zeros(len(self.W_raw))
+                    
+                    # Shift model in the Geocentric frame
+                    for pp in pixel: I_ttt += tdepth_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0/1000.))))
+                    self.I_syn[nn] = I_ttt/len(pixel)*window[nn]
+                
+                self.I_syn=1-self.I_syn
+                
+            else:
                 I_ttt = np.zeros(len(self.W_raw))
-                
                 # Shift model in the Geocentric frame
-                for pp in pixel: I_ttt += f(self.W_raw/(1.0+((Vc[nn]+vp[nn]+pp)/c0)))
-                self.I_syn[nn] = I_ttt/len(pixel)*window[nn]
+                for pp in pixel: I_ttt += flux_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0/1000.))))
+                self.I_syn[nn]  = I_ttt/len(pixel)
                 
-        self.I_syn=1-self.I_syn
-        I_fin = self.I_raw*self.I_syn
-        return self.I_syn
+                print("DONE\n")
+
  
 

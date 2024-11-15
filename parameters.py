@@ -52,8 +52,9 @@ orders   =  np.arange(31,80)[::-1].tolist()
 nord = len(orders)
 
 ### Ephemerides (to compute orbital phase)
-T0       =  2459130.8962180                #Mid-transit time [BJD]
+T0       =  2459130.8962180                #Mid-transit (or cunjunction) time [BJD]
 Porb     = 2.218577                      #Orbital period [d]
+T_peri   = 2459130.8962180            ## Time of peri astron passage for an elliptical orbit
 
 ### Transit parameters -- Compute the transit window
 ### Using batman python package https://lweb.cfa.harvard.edu/~lkreidberg/batman/
@@ -63,12 +64,12 @@ Rs       = 26112750000.   #Stellar radius [m]
 Ms       = 0.4*1.989*1e30     #Stellar mass [kg] 
 ip       = 90.0    #Transit incl.  [deg]
 ap       = 14.0534030   #Semi-maj axis  [R_star]
-ep       = 0.0     #Eccentricity of Pl. orbit
+ep       = 0.2     #Eccentricity of Pl. orbit
 wp       = 0.0     #Arg of periaps [deg]
 ld_mod   = "quadratic"     #Limb-darkening model ["nonlinear", "quadratic", "linear"]
 ld_coef  = [0.0156,0.313]  #Limb-darkening coefficients 
 
-
+T_star = 5000.  #stellar temperature [K]. Only necessary for injecting a planet in emission.
 ### Stellar radial velocity info
 Ks        = 0.164    #RV semi-amplitude of the star orbital motion due to planet [km/s]
 V0        = 11.73    #Stellar systemic velocity [km/s]
@@ -84,6 +85,7 @@ plot_read     = True     # If True, plot transit info
 
 planet_wavelength_nm_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/lambdasGL15A_HD189_onlyH2O-VMR3-T900.txt"
 planet_radius_m_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
+planet_flux_SI_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
 K_inj = 120.
 V_inj = 30.
 amp_inj = 1

@@ -1,7 +1,4 @@
 
-import numpy as np
-import matplotlib.pyplot as plt
-import pickle
 import functions as func
 import importlib
 
@@ -10,6 +7,9 @@ prm_name = "parameters_WASP127"
 prm = importlib.import_module(prm_name)
 nobs = prm.num_obs
 
+if prm.type_obs not in ["tranmission","emission"]:
+    print("Observation type does not exist. it must be either 'transmission' or 'emission'")
+    exit()
 
 if prm.READ_DATA:
     if len(prm.dir_data) != nobs or len(prm.read_name_fin) != nobs:

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import speed_functions as speed_func
 import read_functions as read_func
 import reduce_functions as red_func
 import correlate_functions as corr_func
@@ -8,10 +9,14 @@ import correlate_functions as corr_func
 import time
 import plots
 import importlib
+
+from global_parameters import c0,h_planck,k_boltzmann
 # import reduce_encoder as encoder
 
 
+def B(lambdas,T): #Planck function as a function of wavelength for emission spectroscopy
 
+    return 2*h_planck*c0**2/(lambdas**5)/(np.exp(h_planck*c0/lambdas/T/k_boltzmann)-1.)
 
 def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     prm=importlib.import_module(prm_name) #import the good parameter file input from main.py
@@ -42,19 +47,27 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     
     
     print("\nCompute transit")
-    ### Compute phase
-    phase  = (T_obs - prm.T0)/prm.Porb
-    phase -= int(phase[-1])  
+
     
-    
-    ### Compute transit window
-    flux     = read_func.compute_transit(prm.Rp,prm.Rs,prm.ip,prm.T0,prm.ap,prm.Porb,prm.ep,prm.wp,prm.ld_mod,prm.ld_coef,T_obs)
-    window       = (1-flux)/np.max(1-flux)
+    ### Compute phase and transit window. In the emission case, the phase
+    ### is the true anomaly, defined from the periastron passage time. If circular,
+    ### the peri astron time is equal to the conjonction time.
+    if prm.typ_obs=="transmission":
+        phase  = (T_obs - prm.T0)/prm.Porb
+        phase -= int(phase[-1])  
+        flux     = read_func.compute_transit(prm.Rp,prm.Rs,prm.ip,prm.T0,prm.ap,prm.Porb,prm.ep,prm.wp,prm.ld_mod,prm.ld_coef,T_obs)
+        window       = (1-flux)/np.max(1-flux)
+    else:
+        phase = speed_func.compute_true_anomaly(prm.Porb,prm.ep,prm.T_peri,T_obs)/2./np.pi
+        window  = np.ones(len(T_obs))
     print("DONE")
     
     ### Compute Planet-induced RV
-    Vp           = read_func.get_rvs(T_obs,prm.Ks,prm.Porb,prm.T0)
-    Vc           = prm.V0 + Vp - berv  #Geocentric-to-barycentric correction
+    if prm.ep <1e-3:
+        Vstar_planet           = speed_func.rvs_circular(prm.Ks,phase)
+    else:
+        Vstar_planet           = speed_func.rvs(prm.Ks,phase,prm.wp,prm.ep)
+    Vc           = prm.V0 + Vstar_planet - berv  #Geocentric-to-barycentric correction
     
     
     
@@ -92,8 +105,18 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     
     #### Prepare planet injection
     if prm.INJ_PLANET:
-        W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_radius_m_file)
-        transit_depth           = (I_mod / prm.Rs)**2
+        if prm.ep <1e-3:
+            V_planet_inj = speed_func.rvp_circular(phase, prm.K_inj)+prm.V_inj
+        else:
+            V_planet_inj = speed_func.rvp(phase,prm.wp,prm.K_inj,prm.ep)+prm.V_inj
+            
+        
+        if prm.typ_obs=="transmission":
+            W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_radius_m_file)
+            transit_depth    = (I_mod / prm.Rs)**2
+        else:
+            W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_flux_SI_file)
+            planet_flux = I_mod
     ### Save as pickle
     print("\nData saved in",prm.dir_save_read+name_fin_i)
     Ir  = []
@@ -111,14 +134,22 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
             Wmin,Wmax  = 0.95*O.W_raw.min(),1.05*O.W_raw.max() 
             indm      = np.where((W_mod>Wmin)&(W_mod<Wmax))[0]
             W_sel     = W_mod[indm]
-            I_sel     = transit_depth[indm]
             if np.min(W_sel) > 0.995*np.min(O.W_raw) or np.max(W_sel) < 1.005*np.max(O.W_raw):
                 print("Order",O.number,"incomplete because the injected model is not wide enough in wavelength -- discarded")
                 keep_ord[nn] = 0
             else:
-                I_planet = O.add_planet(W_sel,I_sel,window,phase,prm.K_inj,prm.V_inj,Vc,prm.amp_inj)
-                O.I_synth_planet = I_planet
-                O.I_raw = O.I_raw*O.I_synth_planet
+                if prm.typ_obs=="transmission":
+                    I_sel     = transit_depth[indm]
+                    O.add_planet(prm.type_obs,W_sel,I_sel,window,V_planet_inj,Vc,prm.amp_inj)
+                    O.I_raw = O.I_raw*(1.-O.I_synth_planet)
+                else:
+                    I_sel     = planet_flux[indm]
+                    O.add_planet(prm.type_obs,W_sel,I_sel,window,V_planet_inj,Vc,prm.amp_inj)
+                    for tt in range(len(T_obs)):
+                        ### petitRADTRANS outputs must be in SI.
+                        O.I_raw[tt] = O.I_raw[tt]*(1.+O.I_synth_planet[tt]*(prm.Rp/prm.Rs)**2/(np.pi*B(O.W_raw[tt]/(1.0+(V_planet_inj[tt]+Vc[tt])/(c0/1000)),prm.T_star)))
+
+
         if keep_ord[nn]:
             WW.append(O.W_raw)
             Ir.append(O.I_raw)
@@ -141,7 +172,7 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     #           - SN:     Signal-to-noise values for each order [N_order,N_obs]
     
     
-    savedata = (np.array(prm.orders)[keep_ord],WW,Ir,Bl,Ia,T_obs,phase,window,berv,prm.V0+Vp,airmass,SN)
+    savedata = (np.array(prm.orders)[keep_ord],WW,Ir,Bl,Ia,T_obs,phase,window,berv,prm.V0+Vstar_planet,airmass,SN)
     with open(prm.dir_save_read+name_fin_i, 'wb') as specfile:
         pickle.dump(savedata,specfile)
     print("DONE")
@@ -388,6 +419,7 @@ def correlate(prm_name):
 
     correl_tot = []
     list_ord_tot = []
+
     #we loop here over the number of observations
     for nobs in range(prm.num_obs):
         filename = prm.dir_correl_in+prm.correl_name_in[nobs]        
@@ -396,7 +428,10 @@ def correlate(prm_name):
                                                                                                 prm.list_ord_correl,prm.dir_correl_mod)
         #then we create an interpolation array of speed
         Vstarmax = np.max(np.abs(np.array(Vc)-np.array(berv)))
-        Vint_max = np.max(prm.Kpmax*np.abs(np.sin(2.0*np.pi*np.array(phase))))+np.max(np.abs([prm.Vmin,prm.Vmax]))+Vstarmax
+        if prm.type_obs =="transmission":
+            Vint_max = np.max(prm.Kpmax*np.abs(np.sin(2.0*np.pi*np.array(phase))))+np.max(np.abs([prm.Vmin,prm.Vmax]))+Vstarmax
+        else:
+            Vint_max = np.max(prm.Kpmax*abs((max(phase)-min(phase)))+np.max(np.abs([prm.Vmin,prm.Vmax])))+Vstarmax
         Vtot = np.linspace(-1.02*Vint_max,1.02*Vint_max,prm.int_speed*int(Vint_max))
         
         Vstar = np.array(Vc)-np.array(berv)
