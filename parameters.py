@@ -5,32 +5,23 @@ import scipy.signal
 
 
 
-SMALL_SIZE = 28
-MEDIUM_SIZE = 32
-BIGGER_SIZE = 34
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-
+type_obs = "emission"
 
 
 READ_DATA = True #do you want to read some t.fits files ?
 INJ_PLANET = True
-REDUCE_DATA = True #do you want to reduce one or several pkl file that has been read beforehand ?
-CORREL_DATA = True #do you want to perform correlation from reduced pkl files ? 
+REDUCE_DATA = False #do you want to reduce one or several pkl file that has been read beforehand ?
+CORREL_DATA = False #do you want to perform correlation from reduced pkl files ? 
 
 
-dir_global = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Data/GJ15A/"
+dir_global = "/home/adminloc/Bureau/Atmospheres/Data/GL15A/"
 
 ### Directory to save figures if plot = True
 dir_figures = dir_global+"Figures/"
 
 num_obs = 1 #Number of observing nights that will be treated independently
 #before being added up in the correlation
+
 
 
 ###########################################################################
@@ -41,7 +32,7 @@ num_obs = 1 #Number of observing nights that will be treated independently
 
 
 ### Directory where all the "t.fits" files are stores 
-dir_data = [dir_global+"fits/2020-10-08/"]
+dir_data = [dir_global+"fits/"]
 
 ### Name of the pickle file to store the info in 
 dir_save_read = dir_global+"read/"
@@ -83,12 +74,12 @@ plot_read     = True     # If True, plot transit info
 ###########################################################################
 ###########################################################################
 
-planet_wavelength_nm_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/lambdasGL15A_HD189_onlyH2O-VMR3-T900.txt"
+planet_wavelength_nm_file = "/home/adminloc/Bureau/Atmospheres/Models/Results/lambdastest-H2O.txt"
 planet_radius_m_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
-planet_flux_SI_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
+planet_flux_SI_file = "/home/adminloc/Bureau/Atmospheres/Models/Results/Rptest-H2O.txt"
 K_inj = 120.
 V_inj = 30.
-amp_inj = 1
+amp_inj = 1000
 
 
 
@@ -266,5 +257,27 @@ plot_ccf_tot = True
 white_lines = True
 Kp_planet = 120.
 Vsys_planet = 30.
+
+
+
+
+
+###########################################################################
+###########################################################################
+################### PARAMETERS FOR PLOTS
+###########################################################################
+############################################################################
+SMALL_SIZE = 28
+MEDIUM_SIZE = 32
+BIGGER_SIZE = 34
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+
 
 

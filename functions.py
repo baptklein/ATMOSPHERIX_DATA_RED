@@ -52,7 +52,7 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     ### Compute phase and transit window. In the emission case, the phase
     ### is the true anomaly, defined from the periastron passage time. If circular,
     ### the peri astron time is equal to the conjonction time.
-    if prm.typ_obs=="transmission":
+    if prm.type_obs=="transmission":
         phase  = (T_obs - prm.T0)/prm.Porb
         phase -= int(phase[-1])  
         flux     = read_func.compute_transit(prm.Rp,prm.Rs,prm.ip,prm.T0,prm.ap,prm.Porb,prm.ep,prm.wp,prm.ld_mod,prm.ld_coef,T_obs)
@@ -60,6 +60,8 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     else:
         phase = speed_func.compute_true_anomaly(prm.Porb,prm.ep,prm.T_peri,T_obs)/2./np.pi
         window  = np.ones(len(T_obs))
+        flux  = np.ones(len(T_obs))
+
     print("DONE")
     
     ### Compute Planet-induced RV
@@ -111,14 +113,13 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
             V_planet_inj = speed_func.rvp(phase,prm.wp,prm.K_inj,prm.ep)+prm.V_inj
             
         
-        if prm.typ_obs=="transmission":
+        if prm.type_obs=="transmission":
             W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_radius_m_file)
             transit_depth    = (I_mod / prm.Rs)**2
         else:
             W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_flux_SI_file)
             planet_flux = I_mod
     ### Save as pickle
-    print("\nData saved in",prm.dir_save_read+name_fin_i)
     Ir  = []
     Ia  = []
     Bl  = []
@@ -138,16 +139,16 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
                 print("Order",O.number,"incomplete because the injected model is not wide enough in wavelength -- discarded")
                 keep_ord[nn] = 0
             else:
-                if prm.typ_obs=="transmission":
+                if prm.type_obs=="transmission":
                     I_sel     = transit_depth[indm]
                     O.add_planet(prm.type_obs,W_sel,I_sel,window,V_planet_inj,Vc,prm.amp_inj)
-                    O.I_raw = O.I_raw*(1.-O.I_synth_planet)
+                    O.I_raw = O.I_raw*(1.-O.I_syn)
                 else:
                     I_sel     = planet_flux[indm]
                     O.add_planet(prm.type_obs,W_sel,I_sel,window,V_planet_inj,Vc,prm.amp_inj)
                     for tt in range(len(T_obs)):
                         ### petitRADTRANS outputs must be in SI.
-                        O.I_raw[tt] = O.I_raw[tt]*(1.+O.I_synth_planet[tt]*(prm.Rp/prm.Rs)**2/(np.pi*B(O.W_raw[tt]/(1.0+(V_planet_inj[tt]+Vc[tt])/(c0/1000)),prm.T_star)))
+                        O.I_raw[tt] = O.I_raw[tt]*(1.+O.I_syn[tt]*(prm.Rp/prm.Rs)**2/(np.pi*B((O.W_raw*1.e-9)/(1.0+(V_planet_inj[tt]+Vc[tt])/(c0/1000)),prm.T_star)))
 
 
         if keep_ord[nn]:
@@ -171,11 +172,10 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     #           - airmass:Airmass values
     #           - SN:     Signal-to-noise values for each order [N_order,N_obs]
     
-    
     savedata = (np.array(prm.orders)[keep_ord],WW,Ir,Bl,Ia,T_obs,phase,window,berv,prm.V0+Vstar_planet,airmass,SN)
     with open(prm.dir_save_read+name_fin_i, 'wb') as specfile:
         pickle.dump(savedata,specfile)
-    print("DONE")
+    print("\nData saved in",prm.dir_save_read+name_fin_i+".pkl")
     
     
     ##### write the parameters with the same name as the final file to keep them stored

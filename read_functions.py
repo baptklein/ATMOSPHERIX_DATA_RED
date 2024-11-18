@@ -293,7 +293,6 @@ class Order:
                 for pp in pixel: I_ttt += flux_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0/1000.))))
                 self.I_syn[nn]  = I_ttt/len(pixel)
                 
-                print("DONE\n")
 
  
 

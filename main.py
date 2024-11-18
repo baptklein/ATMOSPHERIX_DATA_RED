@@ -3,7 +3,7 @@ import functions as func
 import importlib
 
 # prm_name = input("Parameter file: ")
-prm_name = "parameters_WASP127"
+prm_name = "parameters"
 prm = importlib.import_module(prm_name)
 nobs = prm.num_obs
 
