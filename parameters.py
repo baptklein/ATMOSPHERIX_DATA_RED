@@ -7,6 +7,17 @@ import scipy.signal
 
 type_obs = "emission"
 
+SMALL_SIZE = 28
+MEDIUM_SIZE = 32
+BIGGER_SIZE = 34
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
 
 READ_DATA = True #do you want to read some t.fits files ?
 INJ_PLANET = True
