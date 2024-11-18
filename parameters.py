@@ -143,6 +143,7 @@ mode_pca    = "pca"                     ### "pca" or "autoencoder"
 wpca = False   #Use weighted pca
 auto_tune   = True                  ### Automatic tuning of number of components
 factor_pca = 1.1 #factor in the auto tune: every PC above factor*white_noise_mean_eigenvalue is suppressed
+min_pca  = 0 #minimim number of removed components
 mode_norm_pca = "none" #how to remove mean and std in the data before PCA. Four possibilities:
                          # "none" : data untouched.
                          # "global" : suppression of mean and division by the std of the whole data set 

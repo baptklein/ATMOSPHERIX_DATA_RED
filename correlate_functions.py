@@ -13,8 +13,10 @@ import scipy.signal
 from scipy import stats
 import pickle
 import time
+import speed_functions as speed
 
-c0 = 299792.458
+
+from global_parameters import c0
 
 def load_data(filename,select_ord,list_ord1,dire_mod):
     """
@@ -121,7 +123,7 @@ def interpolate_model(F,wl,Vtot,pixel_window,weights):
         for j in range(len(Vtot)):
             #shift the wavelength
             #average on a pixel size
-            mod_int[j]= np.average(F[i](list(map(lambda x: wl[i]/(1.0+(Vtot[j]+x)/c0),pixel_window))),weights=weights,axis=0)
+            mod_int[j]= np.average(F[i](list(map(lambda x: wl[i]/(1.0+(Vtot[j]+x)/(c0/1000.)),pixel_window))),weights=weights,axis=0)
         f2D = interp.interp1d(Vtot,mod_int.T)
         F2D.append(f2D)
         print("interp finished for Order ", i+1, "/", len(wl))
@@ -152,7 +154,7 @@ def interpolate_model_parallel(F_proc,wl_proc,Vtot,pixel_window,weights):
         for j in range(len(Vtot)):
             #shift the wavelength
             #average on a pixel size
-            mod_int[j]= np.average(F_proc[i](list(map(lambda x: wl_proc[i]/(1.0+(Vtot[j]+x)/c0),pixel_window))),weights=weights,axis=0)
+            mod_int[j]= np.average(F_proc[i](list(map(lambda x: wl_proc[i]/(1.0+(Vtot[j]+x)/(c0/1000.)),pixel_window))),weights=weights,axis=0)
         f2D = interp.interp1d(Vtot,mod_int.T,kind='linear')
         F2D.append(f2D)
         print("interp advancement:",(i+1)/len(wl_proc)*100, "%")
@@ -161,7 +163,7 @@ def interpolate_model_parallel(F_proc,wl_proc,Vtot,pixel_window,weights):
 
 
 def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,window2,Vstar,pos,Kp,Vsys,nbor,\
-                        use_proj,proj_fast=True,mode_norm_pca="none"):
+                        use_proj,proj_fast,mode_norm_pca,speed_planet,ecc,wp):
 
     """
     Perform correlation analysis between data and model spectra.
@@ -192,6 +194,9 @@ def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,windo
     Nkp = len(Kp)
     Nv = len(Vsys)
     correl_boucher= np.zeros((Nkp,Nv,len(list_ord),len(phase2)))
+    
+    
+    
     for no in range(len(list_ord)):
         dataij = (data_tot[no][pos][:,nbor:-nbor].T-np.mean(data_tot[no][pos][:,nbor:-nbor].T,axis=0))
         tosum = 1./np.mean(SNRtot[no][pos]**2)/Stdtot[no][nbor:-nbor]**2
@@ -201,13 +206,14 @@ def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,windo
             for j in range(Nv):
                 if use_proj:
                     if proj_fast:
-                        interpmod = (F2D[no](Kp[i]*np.sin(2.0*np.pi*np.array(phase2))+Vsys[j]+Vstar[pos]))*window2
+                        
+                        interpmod = (F2D[no](speed_planet(phase2,Kp[i],wp,ecc)+Vsys[j]+Vstar[pos]))*window2
                         interpmod_fin = (np.exp(np.log(interpmod+1) - np.matmul(projo[pos][:,pos[0]],np.log(interpmod+1).T).T))
                     else:
                         # #projector in different cases. The "none" and "global" cases are actually
                         #exactly similar to the proj_fast, but much slower if you go through here
                         interpmod = np.zeros(data_tot[no].shape)
-                        interpmod[pos] = (F2D[no](Kp[i]*np.sin(2.0*np.pi*np.array(phase2))+Vsys[j]+Vstar[pos])*window2).T
+                        interpmod[pos] = (F2D[no](speed_planet(phase2,Kp[i],wp,ecc)+Vsys[j]+Vstar[pos])*window2).T
                         Il    = np.log(interpmod+1.0) #just to avoid nans
 
                         if mode_norm_pca =="none":
@@ -243,7 +249,7 @@ def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,windo
                         interpmod_fin= (np.exp(toexp)-1.0)
 
                 else:
-                    interpmod_fin = F2D[no](Kp[i]*np.sin(2.0*np.pi*np.array(phase2))+Vsys[j]+Vstar[pos])*window2
+                    interpmod_fin = F2D[no](speed_planet(phase2,Kp[i],wp,ecc)+Vsys[j]+Vstar[pos])*window2
 
     
                 modelij = interpmod_fin[nbor:-nbor]-\

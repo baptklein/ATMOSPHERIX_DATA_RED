@@ -21,11 +21,11 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 READ_DATA = True #do you want to read some t.fits files ?
 INJ_PLANET = True
-REDUCE_DATA = False #do you want to reduce one or several pkl file that has been read beforehand ?
-CORREL_DATA = False #do you want to perform correlation from reduced pkl files ? 
+REDUCE_DATA = True #do you want to reduce one or several pkl file that has been read beforehand ?
+CORREL_DATA = True #do you want to perform correlation from reduced pkl files ? 
 
 
-dir_global = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/"
+dir_global = "/home/adminloc/Bureau/Atmospheres/Data/GL15A/"
 
 ### Directory to save figures if plot = True
 dir_figures = dir_global+"Figures/"
@@ -43,11 +43,11 @@ num_obs = 1 #Number of observing nights that will be treated independently
 
 
 ### Directory where all the "t.fits" files are stores 
-dir_data = [dir_global+"fits/"]
+dir_data = [dir_global+"fits/1stmoit/"]
 
 ### Name of the pickle file to store the info in 
 dir_save_read = dir_global+"read/"
-read_name_fin = ["test"]
+read_name_fin = ["test.pkl"]
 
 ### List of SPIRou absolute orders -- Reddest: 31; Bluest: 79
 orders   =  np.arange(31,80)[::-1].tolist() 
@@ -55,7 +55,7 @@ nord = len(orders)
 
 ### Ephemerides (to compute orbital phase)
 T0       =  2459130.8962180                #Mid-transit (or cunjunction) time [BJD]
-Porb     = 0.1                     #Orbital period [d]
+Porb     = .1                     #Orbital period [d]
 T_peri   = 2459130.8962180            ## Time of peri astron passage for an elliptical orbit
 
 ### Transit parameters -- Compute the transit window
@@ -66,7 +66,7 @@ Rs       = 26112750000.   #Stellar radius [m]
 Ms       = 0.4*1.989*1e30     #Stellar mass [kg] 
 ip       = 90.0    #Transit incl.  [deg]
 ap       = 14.0534030   #Semi-maj axis  [R_star]
-ep       = 0.     #Eccentricity of Pl. orbit
+ep       = 0.6     #Eccentricity of Pl. orbit
 wp       = 0.0     #Arg of periaps [deg]
 ld_mod   = "quadratic"     #Limb-darkening model ["nonlinear", "quadratic", "linear"]
 ld_coef  = [0.0156,0.313]  #Limb-darkening coefficients 
@@ -85,12 +85,12 @@ plot_read     = True     # If True, plot transit info
 ###########################################################################
 ###########################################################################
 
-planet_wavelength_nm_file = "/home/florian/Bureau/Atmosphere_SPIRou/Models/emission/Results/lambdastest-GL15A_onlyH2O.txt"
+planet_wavelength_nm_file = "/home/adminloc//Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/lambdastest-GL15A_onlyH2O.txt"
 planet_radius_m_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
-planet_flux_SI_file = "/home/florian/Bureau/Atmosphere_SPIRou/Models/emission/Results/fluxtest-GL15A_onlyH2O.txt"
+planet_flux_SI_file = "/home/adminloc//Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/fluxtest-GL15A_onlyH2O.txt"
 K_inj = 120.
 V_inj = 10.
-amp_inj = 1000
+amp_inj = 10
 
 
 
@@ -143,11 +143,13 @@ mode_pca    = "pca"                     ### "pca" or "autoencoder"
 wpca = False   #Use weighted pca
 auto_tune   = True                  ### Automatic tuning of number of components
 factor_pca = 1.1 #factor in the auto tune: every PC above factor*white_noise_mean_eigenvalue is suppressed
+min_pca  = 0 #minimim number of removed components
 mode_norm_pca = "none" #how to remove mean and std in the data before PCA. Four possibilities:
                          # "none" : data untouched.
                          # "global" : suppression of mean and division by the std of the whole data set 
                          # 'per_pix': same as global but column by colum (per pixel)
                          # 'per_obs': same as global but line by line (per observation)
+            
 
  ### Nb of removed components if auto tune is false
 npca        = np.array(1*np.ones(49),dtype=int)     
@@ -165,8 +167,8 @@ orders_rem     = []
 #We can manually decide the where is the transit in the phase direction,
 #and exclude it for the calculation of the mean stellar spectrum.
 #If set_window = False, the transit window defines n_ini and n_end
-set_window = False
-n_ini_fix,n_end_fix = 10,20    ### Get transits start and end indices
+set_window = True
+n_ini_fix,n_end_fix = -1,-1    ### Get transits start and end indices. If you want everything, put -1 -1 e.g. in emission
 
 ### Size of the estimation of the std of the order for final metrics
 N_px          = 200
@@ -211,13 +213,13 @@ dir_correl_out = dir_global+"correlated/"
 correl_name_out = ["test.pkl"]
 
 
-dir_correl_mod = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/to-correl/GL15A_HD189_onlyH2O-VMR3-T900/"
+dir_correl_mod = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Templates/test-GL15A_onlyH2O/"
 
 #DO we select orders or take them all ? If True, provide your order selection
 # for each observation. If an order does not exist in the pkl file, it will 
 # obivously not be used but will not trigger an error.
 select_ord = True
-list_ord_correl = np.arange(32,80)
+list_ord_correl = np.arange(32,35)
 
 #If false, the calculation is performed over the whole dataset. If 
 #True, we only select observation that have a transit window > min_window
@@ -267,7 +269,7 @@ plot_ccf_tot = True
 #Do we add white lines at the planet position ? 
 white_lines = True
 Kp_planet = 120.
-Vsys_planet = 30.
+Vsys_planet = 10.
 
 
 

@@ -12,20 +12,20 @@ import numpy as np
 
 
 """4 functions to compute V, radial velocity of the planet and/or the star, with some input parameters... """
-def rvs_circular(Ks,phase):
+def rvs_circular(phase,Ks,wp=0.,exc=0.):
 
     return -Ks*np.sin(2.*np.pi*phase)
 
 
-def rvs(Ks,nu,w_peri,EXC) :
+def rvs(nu,Ks,w_peri,EXC) :
 
     return -Ks*(np.cos(2.*np.pi*nu + w_peri*np.pi/180) + EXC*np.cos(w_peri*np.pi/180))
 
-def rvp_circular(phase,Kp):
+def rvp_circular(phase,Kp,wp=0.,exc=0.):
 
     return Kp*np.sin(2.*np.pi*phase)
 
-def rvp(nu,w_peri,Kp,EXC) :
+def rvp(nu,Kp,w_peri,EXC) :
 
     return Kp*(np.cos(2.*np.pi*nu + w_peri*np.pi/180) + EXC*np.cos(w_peri*np.pi/180))
 

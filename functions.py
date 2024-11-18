@@ -66,9 +66,9 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     
     ### Compute Planet-induced RV
     if prm.ep <1e-3:
-        Vstar_planet           = speed_func.rvs_circular(prm.Ks,phase)
+        Vstar_planet           = speed_func.rvs_circular(phase,prm.Ks)
     else:
-        Vstar_planet           = speed_func.rvs(prm.Ks,phase,prm.wp,prm.ep)
+        Vstar_planet           = speed_func.rvs(phase,prm.Ks,prm.wp,prm.ep)
     Vc           = prm.V0 + Vstar_planet - berv  #Geocentric-to-barycentric correction
     
     
@@ -110,7 +110,7 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
         if prm.ep <1e-3:
             V_planet_inj = speed_func.rvp_circular(phase, prm.K_inj)+prm.V_inj
         else:
-            V_planet_inj = speed_func.rvp(phase,prm.wp,prm.K_inj,prm.ep)+prm.V_inj
+            V_planet_inj = speed_func.rvp(phase,prm.K_inj,prm.wp,prm.ep)+prm.V_inj
             
         
         if prm.type_obs=="transmission":
@@ -175,7 +175,7 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     savedata = (np.array(prm.orders)[keep_ord],WW,Ir,Bl,Ia,T_obs,phase,window,berv,prm.V0+Vstar_planet,airmass,SN)
     with open(prm.dir_save_read+name_fin_i, 'wb') as specfile:
         pickle.dump(savedata,specfile)
-    print("\nData saved in",prm.dir_save_read+name_fin_i+".pkl")
+    print("\nData saved in",prm.dir_save_read+name_fin_i)
     
     
     ##### write the parameters with the same name as the final file to keep them stored
@@ -428,10 +428,8 @@ def correlate(prm_name):
                                                                                                 prm.list_ord_correl,prm.dir_correl_mod)
         #then we create an interpolation array of speed
         Vstarmax = np.max(np.abs(np.array(Vc)-np.array(berv)))
-        if prm.type_obs =="transmission":
-            Vint_max = np.max(prm.Kpmax*np.abs(np.sin(2.0*np.pi*np.array(phase))))+np.max(np.abs([prm.Vmin,prm.Vmax]))+Vstarmax
-        else:
-            Vint_max = np.max(prm.Kpmax*abs((max(phase)-min(phase)))+np.max(np.abs([prm.Vmin,prm.Vmax])))+Vstarmax
+        
+        Vint_max = np.max(np.abs(speed_func.rvp(phase,prm.Kpmax,prm.wp,prm.ep)))+np.max(np.abs([prm.Vmin,prm.Vmax]))+Vstarmax
         Vtot = np.linspace(-1.02*Vint_max,1.02*Vint_max,prm.int_speed*int(Vint_max))
         
         Vstar = np.array(Vc)-np.array(berv)
@@ -466,6 +464,10 @@ def correlate(prm_name):
             F2D = corr_func.interpolate_model_parallel(F[start_order:end_order+1], wl[start_order:end_order+1], Vtot,prm.pixel_correl,prm.weights)
             
             #Calculate the correlation
+            if prm.ep<1e-3:
+                speed_planet = speed_func.rvp_circular
+            else:
+                speed_planet = speed_func.rvp
             correl_boucher_subset = corr_func.perform_correlation(orders_to_process,\
                                                        data_tot[start_order:end_order+1],\
                                                        projtot[start_order:end_order+1],\
@@ -473,7 +475,7 @@ def correlate(prm_name):
                                                        SNRtot[start_order:end_order+1],\
                                                        F2D, phase2, window2, Vstar,pos, \
                                                        prm.Kp_array,prm.Vsys_array,prm.nbor_correl,prm.use_proj,
-                                                       prm.proj_fast,prm.mode_norm_pca_correl)
+                                                       prm.proj_fast,prm.mode_norm_pca_correl,speed_planet,ecc=prm.ep,wp=prm.wp)
     
     
             comm.Barrier()  # Synchronize processes
@@ -509,12 +511,18 @@ def correlate(prm_name):
             #Interpolate the models on the speed array
             F2D = corr_func.interpolate_model(F,wl,Vtot,prm.pixel_correl,prm.weights)
             
+            
+            if prm.ep<1e-3:
+                speed_planet = speed_func.rvp_circular
+            else:
+                speed_planet = speed_func.rvp
+            
             #And now the correlation, following boucher
             correl_boucher = corr_func.perform_correlation(list_ord, data_tot, \
                                                            projtot, Stdtot, SNRtot, F2D, \
                                                            phase2, window2, Vstar,pos,\
                                                            prm.Kp_array,prm.Vsys_array,prm.nbor_correl,prm.use_proj,
-                                                           prm.proj_fast,prm.mode_norm_pca_correl)
+                                                           prm.proj_fast,prm.mode_norm_pca_correl,speed_planet,prm.ep,prm.wp)
             correl_tot.append(correl_boucher)
             list_ord_tot.append(list_ord)
     
