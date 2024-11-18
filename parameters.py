@@ -90,7 +90,7 @@ planet_radius_m_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERI
 planet_flux_SI_file = "/home/adminloc/Bureau/Atmospheres/Models/Results/Rptest-H2O.txt"
 K_inj = 120.
 V_inj = 30.
-amp_inj = 1000
+amp_inj = 1
 
 
 
