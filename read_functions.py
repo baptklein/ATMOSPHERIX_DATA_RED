@@ -118,7 +118,9 @@ def compute_transit(Rp,Rs,ip,T0,ap,Porb,ep,wp,limb_dark,uh,T_obs):
     params.w         = wp         
     params.limb_dark = limb_dark
     params.u         = uh
-    bat              = batman.TransitModel(params,T_obs)
+    #params.t_secondary = 2458763.967466259 ## Just keeping that here for secondary eclipses
+    #params.fp = 0.001
+    bat              = batman.TransitModel(params,T_obs)#,transittype="secondary")
     flux             = bat.light_curve(params)
     return flux
 
@@ -278,14 +280,13 @@ class Order:
             
         for nn in range(len(self.I_raw)): # For each observation date
             if type_obs =="transmission":
-                if window[nn] != 0.0:
+                if window[nn] > -1.0:
                     I_ttt = np.zeros(len(self.W_raw))
                     
                     # Shift model in the Geocentric frame
                     for pp in pixel: I_ttt += tdepth_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0/1000.))))
                     self.I_syn[nn] = I_ttt/len(pixel)*window[nn]
-                
-                self.I_syn=1-self.I_syn
+
                 
             else:
                 I_ttt = np.zeros(len(self.W_raw))

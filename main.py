@@ -4,11 +4,11 @@ import importlib
 import sys
 
 # prm_name = input("Parameter file: ")
-prm_name = "parameters_testemission"
+prm_name = "parameters"
 prm = importlib.import_module(prm_name)
 nobs = prm.num_obs
 
-if prm.type_obs not in ["tranmission","emission"]:
+if prm.type_obs not in ["transmission","emission"]:
     print("Observation type does not exist. it must be either 'transmission' or 'emission'")
     sys.exit()
 
