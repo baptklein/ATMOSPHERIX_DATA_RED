@@ -11,7 +11,7 @@ Requirements: Python 3 modules
 - astropy
 - wpca (not necessary but recommended)
 
-If you want to run the nested sampling algorithm, you will also need petitRADTANS and pymultinest (and necessarily multinest). We refer you to pymultinest documentation: https://johannesbuchner.github.io/PyMultiNest/) 
+If you want to run the nested sampling algorithm, you will also need petitRADTRANS and pymultinest (and necessarily multinest). We refer you to pymultinest documentation: https://johannesbuchner.github.io/PyMultiNest/) 
 
 We provide a sample of t.fits files for an observing sequence of GJ15A, as used in the ATMOSPHERIX  I and II papers:
   https://drive.google.com/drive/folders/1CHupP3I4r6bzJgUoblpmi8SKpEQvRnEs?usp=sharing
