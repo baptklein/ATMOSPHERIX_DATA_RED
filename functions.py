@@ -322,7 +322,7 @@ def reduce(prm_name,name_in,name_out):
         # but you can try not to do it for test
         if prm.second_norm_type =="simple":
             O.I_norm2 = np.zeros(O.I_sub[:,int(prm.N_med/2):-int(prm.N_med/2)].shape)
-            for i in range(len(O.I_norm)):
+            for i in range(len(O.I_norm2)):
                 O.I_norm2[i] = (O.I_sub[i]-np.convolve(O.I_sub[i], np.ones(prm.N_med)/prm.N_med, mode='same'))[int(prm.N_med/2):-int(prm.N_med/2)]+1
             O.W_norm2 = O.W_sub[int(prm.N_med/2):-int(prm.N_med/2)]
             
