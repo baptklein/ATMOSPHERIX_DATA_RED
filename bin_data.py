@@ -3,8 +3,11 @@
 """
 Created on Tue Oct 31 09:44:23 2023
 
+a file to bin the data to a smaller size. Not user friendly format yet
 @author: adminloc
 """
+
+
 
 import numpy as np
 import pickle
