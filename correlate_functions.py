@@ -245,7 +245,8 @@ def perform_correlation(list_ord,data_tot,projtot,Stdtot,SNRtot,F2D,phase2,windo
                             
                         model_ret = ff-np.matmul(projo,ff)
                         toexp = (model_ret*ist+im)[pos].T
-            
+                        # toexp = (model_ret)[pos].T
+
                         interpmod_fin= (np.exp(toexp)-1.0)
 
                 else:
@@ -325,8 +326,12 @@ def plot_correlation(list_ord,correl_boucher,select_plot,lili,Kp,Vsys,\
     # Same as above: uncomment first or second line
     
     plt.contourf(Vsys,Kp,correl_summed/snrmap,cmap="gist_heat",levels=nlevels)
-        
     plt.colorbar(label="SNR")
+
+    nsigma = np.max(correl_summed/snrmap)
+    plt.contour(Vsys,Kp,correl_summed/snrmap,linestyles=["solid","dotted","dashed"],levels=[nsigma-3,nsigma-2,nsigma-1,nsigma],colors="white")
+
+        
 
     plt.xlabel("Doppler shift (km.s$^{-1}$)")
     plt.ylabel("Orbital semi amplitude (km.s$^{-1}$)")
@@ -408,8 +413,12 @@ def plot_correlation_tot(list_tot,correl_tot,select_plot,lili,Kp,Vsys,\
     # Same as above: uncomment first or second line
     
     plt.contourf(Vsys,Kp,correl_summed/snrmap,cmap="gist_heat",levels=nlevels)
-        
     plt.colorbar(label="SNR")
+
+    nsigma = np.max(correl_summed/snrmap)
+    plt.contour(Vsys,Kp,correl_summed/snrmap,linestyles=["solid","dotted","dashed"],levels=[nsigma-3,nsigma-2,nsigma-1,nsigma],colors="white")
+
+        
 
     plt.xlabel("Doppler shift (km.s$^{-1}$)")
     plt.ylabel("Orbital semi amplitude (km.s$^{-1}$)")

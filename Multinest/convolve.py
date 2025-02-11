@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Aug 24 14:16:03 2021
+
+@author: florian
+"""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Fri Aug 13 13:31:37 2021
 
@@ -10,10 +19,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy import signal
-import time
 
 
-def rotate(R,wl,vrot,superrot,angle_super=25.0*np.pi/180,sigma=1800.0) :
+def rotate(R,wl,vrot,superrot,angle_super=25.0*np.pi/180,sigma=1270.0) :
 
     if vrot<100: #we are not able to see the difference anyway , and that prevents from creating exceptions in 
     #the code
@@ -22,7 +30,6 @@ def rotate(R,wl,vrot,superrot,angle_super=25.0*np.pi/180,sigma=1800.0) :
     c0 = 299792458.0
 
     #we take a kernel of size 50 000 km/s, it is exagerated but is safe
-
     vlim = 50000.0
     nv = 5000
     v = np.linspace(-vlim,vlim,nv)
@@ -41,7 +48,10 @@ def rotate(R,wl,vrot,superrot,angle_super=25.0*np.pi/180,sigma=1800.0) :
     vrot_array = np.arange(-vrot*fraclim,vrot,step=dv) #a trick to ensure symmetry in this array
     first_conv=  1/np.sqrt(1-(vrot_array/vrot)**2) #rotation kernel
     second_conv = np.exp(-v**2/2/sigma**2) #instrumental kernel
-
+#    third_conv = np.zeros(nv)
+#    for i in range(nv):
+#        if np.abs(v[i])<3000:
+#            third_conv[i] = 1./6000.
     if superrot>100.0: #if lower, we won't see the difference anyway
         #limits of convolution for superrotating parts
         cos1 = np.cos(angle_super)
@@ -62,14 +72,18 @@ def rotate(R,wl,vrot,superrot,angle_super=25.0*np.pi/180,sigma=1800.0) :
                                   (2*cos1*vrot)/(len(vrot_array)-2*pos1-2)*signal.oaconvolve(mod_int[2*nsuper_half:-2*nsuper_half]**2, first_conv[pos1+1:pos2],mode="same") + \
                                   (vrot-cos1*(vrot))/(pos1+1)*signal.oaconvolve(mod_int[:-2*nsuper_conv]**2, first_conv_2,mode="same"))
         conv2_mod = 1/sigma/np.sqrt(2*np.pi)*2*vlim/nv*signal.oaconvolve(conv1_mod,second_conv,mode="same")  
+#        conv3_mod = 2*vlim/nv*signal.oaconvolve(conv2_mod,third_conv,mode="same") 
         convtot_mod = np.sqrt(conv2_mod)
+
         wl_int = w0/(1+speed_int[nsuper_conv:-nsuper_conv]/c0)
 
         
     else:
         conv1_mod = 1/vrot/np.pi*((np.max(vrot_array)-np.min(vrot_array))/len(vrot_array)*signal.oaconvolve(mod_int**2, first_conv,mode="same"))#+(0.0447251+0.051)*vrot*np.mean(mod_int**2))
         conv2_mod = 1/sigma/np.sqrt(2*np.pi)*2*vlim/nv*signal.oaconvolve(conv1_mod,second_conv,mode="same")  
+#        conv3_mod = 2*vlim/nv*signal.oaconvolve(conv2_mod,third_conv,mode="same")
         convtot_mod = np.sqrt(conv2_mod)
+
         wl_int = w0/(1+speed_int/c0)
 
 
@@ -79,3 +93,12 @@ def rotate(R,wl,vrot,superrot,angle_super=25.0*np.pi/180,sigma=1800.0) :
 
 
     return (wl_int[n+nv:-n-nv:spacing],convtot_mod[n+nv:-n-nv:spacing])
+#np.savetxt("/home/florian/Bureau/Atmosphere_SPIRou/Transit_2D/Convolution/test_model/templates/allday_superrot2/lambdasallday_superrot2.txt",c0/freq_tot[::100][::-1]*1e9)
+#np.savetxt("/home/florian/Bureau/Atmosphere_SPIRou/Transit_2D/Convolution/test_model/templates/allday_superrot2/Rpallday_superrot2.txt",R_tot[::100][::-1])
+
+
+
+
+
+
+

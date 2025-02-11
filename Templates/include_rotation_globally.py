@@ -20,24 +20,24 @@ lambdas_unit = "nano"
 
 suffix = '_broadened'
 
-name = "GL15A_HD189_onlyH2O-VMR3-T900"
+name = "UpsAnd-onlyH2O_emission"
 
 
 
-dire = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_git/ATMOSPHERIX_DATA_RED/Data_Simulator/Model/Results/"
+dire = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/"
 dire_res = dire
 
 #SPIRou
 list_ord = np.arange(31,80)
-wlen_file ="/home/florian/Bureau/Atmosphere_SPIRou/wlen_orders.dat"
+wlen_file ="/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/wlen.dat"
 
 
-vrot = 100.0
+vrot = 0.0
 superrot=0.0
 
 
 fr = np.loadtxt(dire+"lambdas"+name+".txt")
-R = np.loadtxt(dire+"Rp"+name+".txt")
+R = np.loadtxt(dire+"flux"+name+".txt")
 
 if R_unit == "cm":
     R = R/100.
@@ -84,5 +84,5 @@ for i in range(len(list_ord)):
         
 #The final data are in nm and cm
 np.savetxt(dire+"lambdas"+name+suffix+".txt",wlen_final)
-np.savetxt(dire+"Rp"+name+suffix+".txt",R_final*100)
+np.savetxt(dire+"flux"+name+suffix+".txt",R_final)
         

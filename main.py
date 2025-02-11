@@ -30,6 +30,6 @@ if prm.CORREL_DATA:
     if  len(prm.correl_name_in) != nobs or len(prm.correl_name_out) != nobs:
         print("reduce_name_in and reduce_name_out must be of length num_obs. Exiting")
         sys.exit()
-    func.correlate(prm_name)
+    func.correlate(prm_name)    
         # 
 

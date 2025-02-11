@@ -1,0 +1,2 @@
+/home/fdebras/petitRADTRANS/petitRADTRANS/radtrans.py:116: FutureWarning: pRT_input_data_path was set by an environment variable. In a future update, the path to the petitRADTRANS input_data will be set within a .ini file that will be automatically generated into the user home directory (OS agnostic), inside a .petitradtrans directory
+  FutureWarning)

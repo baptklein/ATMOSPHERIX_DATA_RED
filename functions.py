@@ -46,7 +46,7 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     print("DONE")
     
     
-    print("\nCompute transit")
+    print("\nCompute window function and planet-induced RV")
 
     
     ### Compute phase and transit window. In the emission case, the phase
@@ -59,8 +59,14 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
         window       = (1-flux)/np.max(1-flux)
     else:
         phase = speed_func.compute_true_anomaly(prm.Porb,prm.ep,prm.T_peri,T_obs)/2./np.pi
-        window  = np.ones(len(T_obs))
-        flux  = np.ones(len(T_obs))
+        if prm.transiting:
+            flux     = read_func.compute_transit(prm.Rp,prm.Rs,prm.ip,prm.T0,prm.ap,prm.Porb,prm.ep,prm.wp,#
+                                                     prm.ld_mod,prm.ld_coef,T_obs,ttype="secondary",T_eclipse=prm.T_eclipse,
+                                                 fp = -0.1) #jsut a trick to ease the window
+            window       = (1-flux)/np.max(1-flux)
+        else:
+            window  = np.ones(len(T_obs))
+            flux  = np.ones(len(T_obs))
 
     print("DONE")
     
@@ -75,7 +81,7 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     
     ### Plot transit information
     if prm.plot_read:
-        print("\nPlot transit")
+        print("\nPlot observation information")
         TT     = 24.*(T_obs - prm.T0)
         ypad   = 15  # pad of the y label
         plt.figure(figsize=(15,12))
@@ -104,9 +110,10 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
         print("DONE")
     
         
-    
     #### Prepare planet injection
     if prm.INJ_PLANET:
+        print("\n Inject planet")
+
         if prm.ep <1e-3:
             V_planet_inj = speed_func.rvp_circular(phase, prm.K_inj)+prm.V_inj
         else:
@@ -175,14 +182,18 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     savedata = (np.array(prm.orders)[keep_ord],WW,Ir,Bl,Ia,T_obs,phase,window,berv,prm.V0+Vstar_planet,airmass,SN)
     with open(prm.dir_save_read+name_fin_i, 'wb') as specfile:
         pickle.dump(savedata,specfile)
-    print("\nData saved in",prm.dir_save_read+name_fin_i)
+    print("\n Data saved in",prm.dir_save_read+name_fin_i)
     
     
     ##### write the parameters with the same name as the final file to keep them stored
     with open(prm.dir_save_read+name_fin_i[:-3]+"params",'w') as read_paramfile:
         write_params = "Files from" + str(dir_data_i)+"\n"
+        write_params += "Observation type = "+str(prm.type_obs)+"\n"
         write_params += "T0 = "+str(prm.T0) +"\n"
         write_params += "Porb = "+str(prm.Porb)+"\n"
+        write_params += "T_peri = "+str(prm.T_peri) +"\n"
+        write_params += "T0_eclipse = "+str(prm.T_eclipse) +"\n"
+        write_params += "Eclipsing ?  "+str(prm.transiting) +"\n"
         write_params+= "Rp = "+str(prm.Rp)+"\n"
         write_params+= "Rs = "+str(prm.Rs)+"\n"
         write_params+= "ip = "+str(prm.ip)+"\n"
@@ -196,7 +207,10 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
         write_params+= "Add a synthetic planet = "+str(prm.INJ_PLANET)+"\n"
         if prm.INJ_PLANET:
             write_params+= "planet_wavelength_nm_file = "+str(prm.planet_wavelength_nm_file)+"\n"
-            write_params+= "planet_radius_m_file = "+str(prm.planet_radius_m_file)+"\n"
+            if prm.type_obs =="transmission":
+                write_params+= "planet_radius_m_file = "+str(prm.planet_radius_m_file)+"\n"
+            else:
+                write_params+= "planet_flux_SI_file = "+str(prm.planet_flux_SI_file)+"\n"
             write_params+= "amp_inj = "+str(prm.amp_inj)+"\n"
 
         read_paramfile.write(write_params)
@@ -214,6 +228,7 @@ def reduce(prm_name,name_in,name_out):
     #Create a list of orders to remove
     nord = len(list_ord)
     ind_rem = []
+    # ind_rem = np.arange(0,45).tolist()
     #Do we exclude some orders ?
     if len(prm.orders_rem)>0:
         for nn in range(len(list_ord)):
@@ -236,6 +251,11 @@ def reduce(prm_name,name_in,name_out):
     ncomp = []
 
     #### Main reduction
+    if prm.corr_star:
+         V_brog = -berv*1000
+         IS_corr = np.load(prm.IC_name)
+         WS_corr = np.load(prm.WC_name)
+
     print("START DATA REDUCTION")
     for nn in range(nord):
         O         = list_ord[nn]
@@ -245,45 +265,102 @@ def reduce(prm_name,name_in,name_out):
         
         print("ORDER",O.number)
         #Start by Boucher+21 telluric correction, + remove some extreme points
-        O.W_cl,O.I_cl,O.A_cl,O.V_cl = red_func.tellurics_and_borders(O,prm.dep_min,prm.thres_up,prm.N_bor)
-        
+        O.W_tells,O.I_tells,O.A_tells = red_func.tellurics_and_borders(O,prm.dep_min,prm.thres_up,prm.N_bor)
+
         #if not enough points, we discard
-        if len(O.W_cl) < prm.Npt_lim:
-            print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(O.W_cl)," pts remaining)")
+        if len(O.W_tells) < prm.Npt_lim:
+            print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(O.W_tells)," pts remaining)")
             print("DISCARDED\n")
             ind_rem.append(nn)
             continue
-
         
-        #Do we include stellar correction a la Brogi ?
-        if prm.corr_star:
-            O.I_cl  = red_func.stellar_from_file(O,nn,prm.IC_name,prm.WC_name,V_corr,prm.sig_g,prm.thres_up)
+        #Remove some outliers before first normalisation
+        O.W_filt,O.I_filt,ind_px= O.filter_pixel(O.W_tells,O.I_tells,prm.deg_px,prm.sig_out)
+
+        ## Normalize before calculating master spectrum. I would advise using the percentile normalisation here
+        if prm.first_norm_type =="simple":
+            O.I_norm1 = np.zeros(O.I_filt[:,int(prm.N_med/2):-int(prm.N_med/2)].shape)
+            for i in range(len(O.I_norm1)):
+                O.I_norm1[i] = (O.I_filt[i]-np.convolve(O.I_filt[i], np.ones(prm.N_med)/prm.N_med, mode='same'))[int(prm.N_med/2):-int(prm.N_med/2)]+1
+            O.W_norm1 = O.W_filt[int(prm.N_med/2):-int(prm.N_med/2)]
             
-        #Delete master out of trnasit spectrum, in stellar and telluric fram
-        O.W_cl,O.I_cl,ind_px= O.filter_pixel(O.W_cl,O.I_cl,prm.deg_px,prm.sig_out)
-        O.V_cl = O.V_cl[ind_px]
-        O.W_sub, O.I_sub = O.master_out(V_corr,n_ini,n_end,prm.sig_g,prm.N_bor)
         
-        #high pass filter: suppress modal noise
-        O.W_norm1,O.I_norm1 = O.normalize(O.W_sub,O.I_sub,prm.N_med,prm.sig_out,prm.N_adj,prm.N_bor)
-        ### Correct for bad pixels
-        O.W_norm2,O.I_norm2,tmp= O.filter_pixel(O.W_norm1,O.I_norm1,prm.deg_px,prm.sig_out)
+        elif prm.first_norm_type == "old":
+            O.W_norm1,O.I_norm1 = O.normalize(O.W_filt,O.I_filt,prm.N_med,prm.sig_out,prm.N_adj,prm.N_bor)
+        elif prm.first_norm_type == "percentile":
+            O.I_norm1 = (O.I_filt.T/np.percentile(O.I_filt,98,axis=1)).T
+            O.W_norm1 = O.W_filt
+        elif prm.first_norm_type == "none":
+            O.I_norm1 = O.I_filt
+            O.W_norm1 = O.W_filt
+            
 
-        if len(O.W_norm2) < prm.Npt_lim:
-            print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(O.W_norm2)," pts remaining)")
+    
+        # Delete some outliers 
+        O.W_cl,O.I_cl,ind_px= O.filter_pixel(O.W_norm1,O.I_norm1,prm.deg_px,prm.sig_out)
+        O.V_cl = c0*(O.W_cl/O.W_mean-1.)/1000. 
+        
+        
+        if prm.corr_star:
+            ### Correction of stellar contamination (RM and center-to-limb variations)
+            VS_corr = c0*(WS_corr/O.W_mean-1.)
+
+            if (WS_corr.min()>=O.W_cl.max()) or (WS_corr.max()<=O.W_cl.min()):
+                print("No stellar correction available for order:",nn)
+            else:
+                cov = 100.*(WS_corr.max() - WS_corr.min())/(O.W_cl.max()-O.W_cl.min())
+                print("STELLAR CORRECTION: [",WS_corr.min(),",",WS_corr.max(),"]")
+                print("Order wavelengths: [",O.W_cl.min(),",",O.W_cl.max(),"] - Coverage:",round(cov,1),"%")
+                O.I_cl = O.correct_star(VS_corr,IS_corr,V_brog,sig_g=prm.sig_g)
+                
+                
+        # #Delete master out of transit spectrum, in stellar and telluric fram
+
+        O.W_sub, O.I_sub = O.master_out(V_corr,n_ini,n_end,prm.sig_g,prm.N_bor)
+
+        #second normalisation. I would recommend simple or old to delete modal noise,
+        # but you can try not to do it for test
+        if prm.second_norm_type =="simple":
+            O.I_norm2 = np.zeros(O.I_sub[:,int(prm.N_med/2):-int(prm.N_med/2)].shape)
+            for i in range(len(O.I_norm)):
+                O.I_norm2[i] = (O.I_sub[i]-np.convolve(O.I_sub[i], np.ones(prm.N_med)/prm.N_med, mode='same'))[int(prm.N_med/2):-int(prm.N_med/2)]+1
+            O.W_norm2 = O.W_sub[int(prm.N_med/2):-int(prm.N_med/2)]
+            
+        
+        elif prm.second_norm_type == "old":
+            
+            O.W_norm2,O.I_norm2 = O.normalize(O.W_sub,O.I_sub,prm.N_med,prm.sig_out,prm.N_adj,prm.N_bor)
+            
+        elif prm.second_norm_type == "percentile":
+            O.I_norm2 = (O.I_sub.T/np.percentile(O.I_sub,98,axis=1)).T
+            O.W_norm2 = O.W_sub
+            
+        elif prm.second_norm_type == "none":
+            O.I_norm2 = O.I_sub
+            O.W_norm = O.W_sub
+            
+        ### Correct for bad pixels
+        O.W_norm2_pix,O.I_norm2_pix,tmp= O.filter_pixel(O.W_norm2,O.I_norm2,prm.deg_px,prm.sig_out)
+
+
+        if len(O.W_norm2_pix) < prm.Npt_lim:
+            print("ORDER",O.number,"(",O.W_mean,"nm) discarded (",len(O.W_norm2_pix)," pts remaining)")
             print("DISCARDED\n")
             ind_rem.append(nn)
             continue
         else:
-            print(len(O.W_raw)-len(O.W_norm2),"pts removed from order",O.number,"(",O.W_mean,"nm) -- OK")
+            print(len(O.W_raw)-len(O.W_norm2_pix),"pts removed from order",O.number,"(",O.W_mean,"nm) -- OK")
             
 
         #DO we detrend airmass ? 
         if prm.det_airmass:
-            O.I_fin = red_func.airmass_correction(O,airmass,prm.deg_airmass)
+            I_log           = np.log(O.I_norm2_pix)
+            I_det_log       = O.detrend_airmass(O.W_norm2_pix,O.I_norm2_pix,airmass,prm.deg_airmass)
+            I_det           = np.exp(I_det_log)
+            O.I_fin = I_det
         else:
-            O.I_fin= O.I_norm2
-        O.W_fin  = O.W_norm2
+            O.I_fin= O.I_norm2_pix
+        O.W_fin  = O.W_norm2_pix
             
             
         #IF we have some weird orders, we rather delete them
@@ -301,7 +378,7 @@ def reduce(prm_name,name_in,name_out):
                 O.n_com = prm.npca[nn]  
             O.I_pca, O.proj = red_func.apply_PCA(O,prm.mode_norm_pca,prm.wpca)
         
-        #Auto encoder
+        #Auto encoder. NOT USABLE RIGHT NOW
         elif prm.mode_pca == "autoencoder":
            # O.I_pca = encoder.apply_encoder(O.I_fin) 
            O.proj  = np.zeros((len(O.I_fin),len(O.I_fin)))
@@ -375,6 +452,8 @@ def reduce(prm_name,name_in,name_out):
         write_params+= "pixel = "+str(prm.pixel)+"\n"
         write_params+= "sig_g = "+str(prm.sig_g)+"\n"
         write_params+= "N_bor = "+str(prm.N_bor)+"\n"
+        write_params+= "norm1 = "+str(prm.first_norm_type)+"\n"
+        write_params+= "norm2 = "+str(prm.second_norm_type)+"\n"
         write_params+= "N_med = "+str(prm.N_med)+"\n"
         write_params+= "sig_out = "+str(prm.sig_out)+"\n"
         write_params+= "N_adj = "+str(prm.N_adj)+"\n"

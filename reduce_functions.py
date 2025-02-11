@@ -158,7 +158,7 @@ class Order:
     # have been corrected, and correct for these effects by normali-
     # sing the observed spectra by the synthetic user-provided spec.
     # -----------------------------------------------------------
-    def correct_star(self,VS_corr,IS_corr,V_shift,thres_tel=0.03,sig_g=1.13):
+    def correct_star(self,VS_corr,IS_corr,V_shift,sig_g=2.28):
         """
         --> Inputs:     - V_obs:     Velocity vector of the observed spectra [km/s]
                         - I_obs:     Observed spectra (2D matrix)
@@ -166,16 +166,17 @@ class Order:
                         - IS_corr:   Synthetic spectra used to correct the observed ones (2D matrix)
                         - V_shift:   Geocentric to barycentric RV correction [km/s]
                         - I_atm:     Normalised telluric spectrum
-                        - thres_tel: Threshold under which stellar lines are regarded as telluric-free
                         - sig_g:     STD of SPIRou instrumental profile [km/s]
     
     
         --> Outputs:    - If:        Sequence of spectra corrected from IS_corr
         """
         
-        V_obs,I_obs,I_atm = self.V_cl,self.I_cl,self.A_cl
-        dddv    = np.linspace(-3.*sig_g,3.*sig_g,30)
-        G       = normal_law(dddv,0.0,sig_g)
+        #V_obs,I_obs,I_atm = self.V_cl,self.I_cl,self.A_cl
+        V_obs,I_obs = self.V_cl,self.I_cl
+        I_obs = (I_obs.T/np.max(I_obs,axis=1)).T
+        dddv    = np.linspace(-3000.*sig_g,3000.*sig_g,30)
+        G       = normal_law(dddv,0.0,sig_g*1000.)
         step    = dddv[1]-dddv[0]
         If      = np.copy(I_obs)
         for uu in range(len(I_obs)):
@@ -184,15 +185,15 @@ class Order:
             iss   = np.where((V_obs>=VS_corr.min())&(V_obs<=VS_corr.max()))[0]
             vv    = V_obs[iss]
             ii    = I_obs[uu,iss]
-            aa    = I_atm[uu,iss]    
+            # aa    = I_atm[uu,iss]    
     
             ### Select only the lines with negligible telluric absorption
-            it    = np.where(aa>1-thres_tel)[0]
-            V_sel = vv[it]
-            I_sel = ii[it]        
+            # it    = np.where(aa>1-thres_tel)[0]
+            V_sel = vv#[it]
+            I_sel = ii#[it]        
     
             ### Shift synthetic spectra in Geocentric frame
-            fi       = interp1d(VS_corr,IS_corr[uu],kind="cubic",fill_value="extrapolate")
+            fi       = interp1d(VS_corr,IS_corr[uu],kind="linear",fill_value="extrapolate")
             Icg      = step * (fi(V_sel-V_shift[uu]+dddv[0])*G[0]+fi(V_sel-V_shift[uu]+dddv[-1])*G[-1]) * 0.5
             for hh in range(1,len(dddv)-1):
                 Icg += step*fi(V_sel-V_shift[uu]+dddv[hh])*G[hh]  
@@ -345,7 +346,7 @@ class Order:
         for ii in range(deg): X[:,ii+1] = airmass**(ii+1)
         pb,pbe = LS(X,I,COV_inv)
         I_pred = np.dot(X,pb)
-        I_det  = I - I_pred
+        I_det  = I-I_pred
         return I_det
 
 
@@ -535,11 +536,10 @@ def tellurics_and_borders(O,dep_min,thres_up,N_bor):
     I_cl = I_cl[:,N_bor:-N_bor]
     A_cl = A_cl[:,N_bor:-N_bor]
     # W_cl,I_cl = O.filter_pixel(W_cl,I_cl,deg_px,sig_out)
-    V_cl      = c0*(W_cl/O.W_mean-1.)    
         
     ### If the order does not contain enough points, it is discarded
 
-    return W_cl,I_cl,A_cl,V_cl
+    return W_cl,I_cl,A_cl
         
 
 # -----------------------------------------------------------
@@ -547,22 +547,22 @@ def tellurics_and_borders(O,dep_min,thres_up,N_bor):
 # -----------------------------------------------------------
 
 
-
-def stellar_from_file(O,nn,IC_name,WC_name,V_corr,sig_g,thres_up):        
+#outdated
+# def stellar_from_file(O,nn,IC_name,WC_name,V_brog,sig_g=2.28):        
        
-    ### Correction of stellar contamination (RM and center-to-limb variations)
-    IS_corr = np.load(IC_name)
-    WS_corr = np.load(WC_name)
-    VS_corr = c0*(WS_corr/O.W_mean-1.)  
+#     ### Correction of stellar contamination (RM and center-to-limb variations)
+#     IS_corr = np.load(IC_name)
+#     WS_corr = np.load(WC_name)
+#     VS_corr = c0*(WS_corr/O.W_mean-1.)  
     
-    if (WS_corr.min()>=O.W_cl.max()) or (WS_corr.max()<=O.W_cl.min()):
-        print("No stellar correction available for order:",nn) 
-        return O.I_cl
-    else:
-        cov = 100.*(WS_corr.max() - WS_corr.min())/(O.W_cl.max()-O.W_cl.min())
-        print("STELLAR CORRECTION: [",WS_corr.min(),",",WS_corr.max(),"]")
-        print("Order wavelengths: [",O.W_cl.min(),",",O.W_cl.max(),"] - Coverage:",round(cov,1),"%")
-        return O.correct_star(VS_corr,IS_corr,V_corr,O.A_cl,thres_up,sig_g)
+#     if (WS_corr.min()>=O.W_cl.max()) or (WS_corr.max()<=O.W_cl.min()):
+#         print("No stellar correction available for order:",nn) 
+#         return O.I_cl
+#     else:
+#         cov = 100.*(WS_corr.max() - WS_corr.min())/(O.W_cl.max()-O.W_cl.min())
+#         print("STELLAR CORRECTION: [",WS_corr.min(),",",WS_corr.max(),"]")
+#         print("Order wavelengths: [",O.W_cl.min(),",",O.W_cl.max(),"] - Coverage:",round(cov,1),"%")
+#         return O.correct_star(VS_corr,IS_corr,V_brog,sig_g=sig_g)
 
         
 
@@ -597,12 +597,12 @@ def move_spec(V,I,Vc,sig_g):
     return I_al 
 
 
-
-def airmass_correction(O,airmass,deg_airmass):        
-    I_log           = np.log(O.I_norm2)
-    I_det_log       = O.detrend_airmass(O.W_norm2,I_log,airmass,deg_airmass)
-    I_det           = np.exp(I_det_log)
-    return I_det
+#outdated
+# def airmass_correction(O,airmass,deg_airmass):        
+#     I_log           = np.log(O.I_norm2)
+#     I_det_log       = O.detrend_airmass(O.W_norm2,I_log,airmass,deg_airmass)
+#     I_det           = np.exp(I_det_log)
+#     return I_det
 
 
 
@@ -651,6 +651,8 @@ def apply_PCA(O,mode_norm_pca,wpca):
         principalComponents = pca.transform(x_pca)
         x_pca_projected = pca.inverse_transform(principalComponents)        
         I_pca = np.exp((ff-x_pca_projected)*ist+im)-1.0
+        # I_pca = np.exp((ff-x_pca_projected))-1.0
+
         print(O.n_com,"PCA components discarded")
         
         #For Gibson2021

@@ -90,7 +90,7 @@ def read_data_spirou(repp,list_ord,nord):
 # Uncomment lines below to use batman module to compute transit flux
 # See information in https://lweb.cfa.harvard.edu/~lkreidberg/batman/
 # -----------------------------------------------------------
-def compute_transit(Rp,Rs,ip,T0,ap,Porb,ep,wp,limb_dark,uh,T_obs):
+def compute_transit(Rp,Rs,ip,T0,ap,Porb,ep,wp,limb_dark,uh,T_obs,ttype="primary",T_eclipse=0,fp=0):
 
     """
     --> Inputs:     - Rp:        Planetary radius
@@ -108,6 +108,7 @@ def compute_transit(Rp,Rs,ip,T0,ap,Porb,ep,wp,limb_dark,uh,T_obs):
     --> Outputs:    - flux:      Relative transit flux (1 outside transit) 
     """
 #
+
     params           = batman.TransitParams()
     params.rp        = Rp/Rs                       
     params.inc       = ip
@@ -118,10 +119,14 @@ def compute_transit(Rp,Rs,ip,T0,ap,Porb,ep,wp,limb_dark,uh,T_obs):
     params.w         = wp         
     params.limb_dark = limb_dark
     params.u         = uh
-    #params.t_secondary = 2458763.967466259 ## Just keeping that here for secondary eclipses
-    #params.fp = 0.001
-    bat              = batman.TransitModel(params,T_obs)#,transittype="secondary")
-    flux             = bat.light_curve(params)
+    params.fp        = fp
+    params.t_secondary = T_eclipse
+    if ttype=="secondary":
+        bat              = batman.TransitModel(params,T_obs,transittype="secondary")
+        flux             = bat.light_curve(params)
+    else:
+        bat              = batman.TransitModel(params,T_obs)
+        flux             = bat.light_curve(params)
     return flux
 
 
@@ -280,13 +285,14 @@ class Order:
             
         for nn in range(len(self.I_raw)): # For each observation date
             if type_obs =="transmission":
-                if window[nn] > -1.0:
+                if window[nn] != 0.0:
                     I_ttt = np.zeros(len(self.W_raw))
                     
                     # Shift model in the Geocentric frame
                     for pp in pixel: I_ttt += tdepth_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0/1000.))))
                     self.I_syn[nn] = I_ttt/len(pixel)*window[nn]
-
+                
+                self.I_syn=1-self.I_syn
                 
             else:
                 I_ttt = np.zeros(len(self.W_raw))

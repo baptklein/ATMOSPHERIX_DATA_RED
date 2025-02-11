@@ -16,6 +16,7 @@ G = 6.67e-11
 h_planck =  6.62607015e-34
 k_boltzmann = 1.380649e-23
 
+#just a function for the normalisation. Might not be so useful
 def strided_app(a, L, S ):  # Window len = L, Stride len/stepsize = S
     nrows = ((a.size-L)//S)+1
     n = a.strides[0]
@@ -26,15 +27,15 @@ def B(lambdas,T): #Planck function as a function of wavelength for emission spec
     return 2*h_planck*c0**2/(lambdas**5)/(np.exp(h_planck*c0/lambdas/T/k_boltzmann)-1.)
 nf = 501
 
-type_templ = "tranmission"
-type_templ = "emission"
+type_templ = "transmission"
+# type_templ = "emission"
 
 R_unit = "cm"
-# R_unit = "none"
-Rs = 1.347*696340000.0 # in solar unit
-Ts = 3500.
+R_unit = "none"
+Rs =0.375* 696340000.0 # in solpltar unit
+Ts = 3600.
 
-Rp = 1.0*69911000.0
+Rp = 0.5485*69911000.0
 
 lambdas_unit = "micron"
 lambdas_unit = "nano"
@@ -51,27 +52,18 @@ norm = True
 
 Nphase = 1
 #name only needed if Nphase =1
-name ="test-GL15A_onlyH2O"
+name ="HD189_transmission"
 
+# dire = "/home/adminloc/Bureau/Atmospheres/ELT/HIP67522/Models//"
 dire = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/"
-dire_res = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Templates/"
+
+dire_res = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2//ATMOSPHERIX_DATA_RED/Templates/"
 # dire_res = "/home/florian/Bureau/Atmosphere_SPIRou/Models/GL15A/HD189/to-correl/"
 
 #SPIRou
 list_ord = np.arange(31,80)
 wlen_file ="/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/wlen.dat"
 
-
-
-
-# #MAROON X
-# wlen_file ="/home/florian/Bureau/Atmosphere_SPIRou/wlen_MAROONX.dat"
-# list_ord = np.arange(67,125)
-# list_ord = np.delete(list_ord,np.where(list_ord==80))
-# list_ord = np.delete(list_ord,np.where(list_ord==81))
-
-# list_ord = np.array([78])
-    # list_ord=[33]
 
 
 if type_templ =="transmission":
@@ -98,16 +90,16 @@ if lambdas_unit=="micron":
 
 dire_resphase =dire_res+name
 
-if norm:
-    try :
-        os.mkdir(dire_resphase)
-    except:
-        print("phase folder already exist")
-else:
-    try :
-        os.mkdir(dire_resphase+"_nonorm/")
-    except:
-        print("phase folder already exist")
+if norm==False:
+    dire_resphase += "_nonorm"
+if broadening: 
+    dire_resphase += "_broad"
+    
+    
+try :
+    os.mkdir(dire_resphase)
+except:
+    print("phase folder already exist")
 
 
 for i in range(len(list_ord)):
@@ -122,7 +114,7 @@ for i in range(len(list_ord)):
     
     for j in range(np.shape(lambdas)[0]) :
         out[0,j] = lambdas[j]
-        if type_templ=="tranmission":
+        if type_templ=="transmission":
             if transit_depth:
                 out[1,j] = planet_ord[j]
             else:
@@ -151,10 +143,7 @@ for i in range(len(list_ord)):
         else:
             out_final[1] = out[1][int((nf-1)/2):-int((nf-1)/2)]-win
         
-        if broadening:
-            np.savetxt(dire_resphase+"/"+"templatebroad"+str(list_ord[i])+".txt",out_final.T)
-        else:
-            np.savetxt(dire_resphase+"/"+"template"+str(list_ord[i])+".txt",out_final.T)
+        np.savetxt(dire_resphase+"/"+"template"+str(list_ord[i])+".txt",out_final.T)
 
 
     else:
@@ -163,10 +152,8 @@ for i in range(len(list_ord)):
         out_final[0]  =out[0]
         out_final[1] = out[1]
         
-        if broadening:
-            np.savetxt(dire_resphase+"_nonorm/"+"templatebroad"+str(list_ord[i])+".txt",out_final.T)
-        else:
-            np.savetxt(dire_resphase+"_nonorm/"+"template"+str(list_ord[i])+".txt",out_final.T)
+        np.savetxt(dire_resphase+"template"+str(list_ord[i])+".txt",out_final.T)
 
-    # out_final[1] = -(out[1][int((nf-1)/2):-int((nf-1)/2)]-np.mean(out[1][int((nf-1)/2):-int((nf-1)/2)]))
-    
+
+
+
