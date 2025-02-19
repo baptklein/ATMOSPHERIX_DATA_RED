@@ -37,6 +37,7 @@ dir_data = [dir_global+"/fits/"]
 dir_save_read = dir_global+"read/"
 read_name_fin = ["GL15A_read.pkl"]
 
+
 ### List of SPIRou absolute orders -- Reddest: 31; Bluest: 79
 orders   =  np.arange(31,80)[::-1].tolist() 
 nord = len(orders)
@@ -73,6 +74,8 @@ V0        = 11.73    #Stellar systemic velocity [km/s]
 
 ### Plots
 plot_read     = True     # If True, plot transit info
+figure_name_transit = "transit_GL15A.pdf" #name of the figure file
+
 
 ###########################################################################
 ###########################################################################

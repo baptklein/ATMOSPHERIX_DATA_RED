@@ -17,7 +17,11 @@ if prm.READ_DATA:
         print("dir_data and read_name_fin must be of length num_obs. Exiting")
         sys.exit()   
     for i in range(nobs):
-        func.read(prm_name,prm.dir_data[i],prm.read_name_fin[i]) #We read the data, folder by folder
+        try : 
+            figure_name = prm.figure_name_transit[i]
+        except:
+            figure_name = "transit_info"
+        func.read(prm_name,prm.dir_data[i],prm.read_name_fin[i],figure_name=figure_name) #We read the data, folder by folder
         
 if prm.REDUCE_DATA:
     if  len(prm.reduce_name_in) != nobs or len(prm.reduce_name_out) != nobs:
