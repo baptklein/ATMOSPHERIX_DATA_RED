@@ -74,7 +74,7 @@ V0        = 11.73    #Stellar systemic velocity [km/s]
 
 ### Plots
 plot_read     = True     # If True, plot transit info
-figure_name_transit = "transit_GL15A.pdf" #name of the figure file
+figure_name_transit = ["transit_GL15A"] #name of the figure file
 
 
 ###########################################################################
