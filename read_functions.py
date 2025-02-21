@@ -283,8 +283,8 @@ class Order:
         else:
             flux_interp = PchipInterpolator(self.Wm,Imm)  
             
-        for nn in range(len(self.I_raw)): # For each observation date
-            if type_obs =="transmission":
+        if type_obs =="transmission":
+            for nn in range(len(self.I_raw)): # For each observation date
                 if window[nn] != 0.0:
                     I_ttt = np.zeros(len(self.W_raw))
                     
@@ -292,13 +292,13 @@ class Order:
                     for pp in pixel: I_ttt += tdepth_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0/1000.))))
                     self.I_syn[nn] = I_ttt/len(pixel)*window[nn]
                 
-                self.I_syn=1-self.I_syn
-                
-            else:
+            self.I_syn=1-self.I_syn          
+        else:
                 I_ttt = np.zeros(len(self.W_raw))
                 # Shift model in the Geocentric frame
                 for pp in pixel: I_ttt += flux_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0/1000.))))
                 self.I_syn[nn]  = I_ttt/len(pixel)
+                
                 
 
  
