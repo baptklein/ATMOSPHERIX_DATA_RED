@@ -22,8 +22,13 @@ The code is run by the main.py file, which can read, reduce and/or correl the da
 You can also inject a synthetic planet. 
 The parameters are in the parameters.py file. 
 
-To read the data you need to indicate the location of the t.fits file in the 
-"dir_data" parameter array. You can have several observation sequences, and in that case pay attention
+The easiest way to run the example in the code is to created a directory, that will be your global directory. 
+Inside that directory, create a "fits", a "read", a "reduced", a "correlated" and a "Figures" directory. 
+The "fits" directory will contain all the GL15A observation, and the read, reduced and correlated directory the pkl files after the steps of the pipeline.
+Finally, the "Figures" directory contains the figures if you want to plot stuff during analysis. 
+
+To read the data you need to indicate the location of the t.fits files in the 
+"dir_data" parameter array (see previous paragraph). You can have several observation sequences, and in that case pay attention
 that dir_data must be of length (num_obs). Once read, the data are stored in pkl files to which you need to provide
 names in the parameter file. In detail, the "read" function:
     - Reads fits files
