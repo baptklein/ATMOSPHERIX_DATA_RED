@@ -293,6 +293,7 @@ class Order:
                     self.I_syn[nn] = I_ttt/len(pixel)*window[nn]
                 
         else:
+            for nn in range(len(self.I_raw)): # For each observation date
                 I_ttt = np.zeros(len(self.W_raw))
                 # Shift model in the Geocentric frame
                 for pp in pixel: I_ttt += flux_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0/1000.))))
