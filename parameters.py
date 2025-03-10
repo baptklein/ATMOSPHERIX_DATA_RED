@@ -84,13 +84,13 @@ figure_name_transit = ["transit_GL15A"] #name of the figure file
 ###########################################################################
 
 
-planet_wavelength_nm_file = "/home/adminloc//Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/lambdasGL15A_example_onlyH2O.txt"
+planet_wavelength_nm_file = "/home/adminloc//Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/lambdastest-GL15A_onlyH2O.txt"
 
 # Radius (in meters) for transit. CAREFUL : it is not the transit depth, it is indeed radius
 planet_radius_m_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
 
 #planetary flux in J/m-2/s-1
-planet_flux_SI_file = "/home/adminloc//Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/fluxGL15A_example_onlyH2O.txt"
+planet_flux_SI_file = "/home/adminloc//Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/fluxtest-GL15A_onlyH2O.txt"
 K_inj = 120.
 V_inj = 10.
 amp_inj = 1
