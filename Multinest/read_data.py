@@ -28,16 +28,16 @@ def return_data(config_dict):
         #print(len(proj))
         #exit()        
 
-
-#
-    uncertainties_LR = []
-    data_LR = []
-    data_LR_wavelength = []
-    data_table = np.loadtxt(config_dict["LRS_file"], skiprows=1)
-    for i in range(len(data_table)): #reading the data file
-        data_LR_wavelength.append(data_table[i][0])
-        data_LR.append(data_table[i][1])
-        uncertainties_LR.append(data_table[i][2])
+#    only if you use LRS
+	
+#    uncertainties_LR = []
+#    data_LR = []
+#    data_LR_wavelength = []
+#    data_table = np.loadtxt(config_dict["LRS_file"], skiprows=1)
+#    for i in range(len(data_table)): #reading the data file
+#        data_LR_wavelength.append(data_table[i][0])
+#        data_LR.append(data_table[i][1])
+#        uncertainties_LR.append(data_table[i][2])
 #
 
  #final_data and final std contain num_transit arrays of size norders*nphase.
