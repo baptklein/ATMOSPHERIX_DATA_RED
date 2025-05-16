@@ -21,7 +21,7 @@ def make_data(args):
     # after the first obs
     pkl =  ["GL15A_reduced_MCMC.pkl"],
 
-
+#you can use anything in the test case, where LRS is actually commented everywhere
     LRS_file = "example.txt"
 
 
