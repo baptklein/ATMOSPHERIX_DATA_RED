@@ -54,38 +54,52 @@ dir_res = "/home/adminloc/Bureau/Atmospheres/Data/GL15A/reduced/"
 name_fin = "GL15A_reduced_MCMC.pkl"
 
 with open(REP_DATA+filename,'rb') as ccfile:
-    orders,W_data,I_data,T_obs,phase,window,berv,Vc,airmass,SN, proj = pickle.load(ccfile)
+    orders,W_data,I_data,T_obs,phase,window,berv,Vc,SN, proj = pickle.load(ccfile)
 
 
 lambdas = np.zeros((2,130))
 
+orders_final = []
+I_final = []
 V_data = []
 Std_tot = []
 Vstar = Vc-berv
 Wmean_tot = []
-projtot = []
+proj_final = []
 
-
+orders_to_select = orders
+print(orders_to_select)
 for k in range(len(orders)):
-    Wmean = np.mean(W_data[k])
-    V_corr =c0*(W_data[k]/Wmean - 1.)
-    V_data.append(V_corr)
-    lambdas[:,orders[k]] = [W_data[k][0],W_data[k][-1]]
-    Wmean_tot.append(Wmean)
+    if orders[k] in orders_to_select:
+        orders_final.append(orders[k])
 
-    #We fit a second order parabola to the Std data
-    Std = np.zeros(np.shape(I_data[k])[1])
-    for i in range(np.shape(I_data[k])[1]):
-        Std[i] = (np.std(I_data[k][:,i]))
-    fit2 = np.polyfit(V_corr,Std,2)
-    Stdfit = np.poly1d(fit2)
-    Std_tot.append(Std)
+        Wmean = np.mean(W_data[k])
+        Wmean_tot.append(Wmean)
+
+        V_corr =c0*(W_data[k]/Wmean - 1.)
+        V_data.append(V_corr)
+
+        I_final.append(I_data[k])
+
+        #We fit a second order parabola to the Std data
+        Std = np.zeros(np.shape(I_data[k])[1])
+        for i in range(np.shape(I_data[k])[1]):
+            Std[i] = (np.std(I_data[k][:,i]))
+        fit2 = np.polyfit(V_corr,Std,2)
+        Stdfit = np.poly1d(fit2)
+        Std_tot.append(Std)
+
+        proj_final.append(proj[k])
+
+        lambdas[:,orders[k]] = [W_data[k][0],W_data[k][-1]]
 #    Std_tot.append(Stdfit(V_corr))
-    
-    
-savedata = (orders,Wmean_tot,V_data,I_data,Std_tot,phase,window,Vstar,)
+
+    else:
+        continue
+orders_final= np.array(orders_final)
+savedata = (orders_final,Wmean_tot,V_data,I_final,Std_tot,phase,window,Vstar,proj_final)
 with open(dir_res+name_fin, 'wb') as specfile:
-    pickle.dump(savedata,specfile)    
+    pickle.dump(savedata,specfile)
     
 
 
