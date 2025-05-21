@@ -42,6 +42,12 @@ read_name_fin = ["GL15A_read.pkl"]
 orders   =  np.arange(31,80)[::-1].tolist() 
 nord = len(orders)
 
+#list of orders we don't want to reduce for whatever reason
+# careful : this is sorted by number in the array and not ordrer number:
+# 0 is 79, 1 is 78 .... 48 is 31
+ind_rem = [] 
+
+
 ### Ephemerides (to compute orbital phase)
 T0       = 2459130.8962180                #Mid-transit (or cunjunction) time [BJD]
 Porb     = 2.218577                      #Orbital period [d]

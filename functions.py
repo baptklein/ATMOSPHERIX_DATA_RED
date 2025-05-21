@@ -227,8 +227,7 @@ def reduce(prm_name,name_in,name_out):
     T_obs,phase,window,berv,vstar,airmass,SN,list_ord= red_func.read_data_and_create_list(prm.dir_reduce_in+name_in)
     #Create a list of orders to remove
     nord = len(list_ord)
-    ind_rem = []
-    # ind_rem = np.arange(0,45).tolist()
+    ind_rem = prm.ind_rem
     #Do we exclude some orders ?
     if len(prm.orders_rem)>0:
         for nn in range(len(list_ord)):
