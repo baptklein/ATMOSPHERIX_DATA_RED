@@ -127,7 +127,7 @@ def interpolate_model(F,wl,Vtot,pixel_window,weights):
             mod_int[j]= np.average(F[i](list(map(lambda x: wl[i]/(1.0+(Vtot[j]+x)/(c0/1000.)),pixel_window))),weights=weights,axis=0)
 
         # f2D = interp.interp1d(Vtot,mod_int.T,kind="linear")
-        f2D = PchipInterpolator(Vtot, mod_int,axis=1)
+        f2D = PchipInterpolator(Vtot, mod_int.T,axis=1)
         F2D.append(f2D)
         print("interp finished for Order ", i+1, "/", len(wl))
     return F2D
@@ -157,7 +157,7 @@ def interpolate_model_parallel(F_proc,wl_proc,Vtot,pixel_window,weights):
             #shift the wavelength
             #average on a pixel size
             mod_int[j]= np.average(F_proc[i](list(map(lambda x: wl_proc[i]/(1.0+(Vtot[j]+x)/(c0/1000.)),pixel_window))),weights=weights,axis=0)
-        f2D = PchipInterpolator(Vtot, mod_int,axis=1)
+        f2D = PchipInterpolator(Vtot, mod_int.T,axis=1)
         F2D.append(f2D)
         print("interp advancement:",(i+1)/len(wl_proc)*100, "%")
         
