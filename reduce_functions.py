@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.interpolate import interp1d
+from scipy.interpolate import PchipInterpolator
+
 from scipy.ndimage import median_filter
 from astropy.modeling import fitting, polynomial
 from astropy.stats import sigma_clip
@@ -193,7 +195,7 @@ class Order:
             I_sel = ii#[it]        
     
             ### Shift synthetic spectra in Geocentric frame
-            fi       = interp1d(VS_corr,IS_corr[uu],kind="linear",fill_value="extrapolate")
+            fi       = PchipInterpolator(VS_corr,IS_corr[uu])#,kind="linear",fill_value="extrapolate")
             Icg      = step * (fi(V_sel-V_shift[uu]+dddv[0])*G[0]+fi(V_sel-V_shift[uu]+dddv[-1])*G[-1]) * 0.5
             for hh in range(1,len(dddv)-1):
                 Icg += step*fi(V_sel-V_shift[uu]+dddv[hh])*G[hh]  
@@ -309,7 +311,7 @@ class Order:
                 else: out = False
                     
             ### Interpolate over outliers and apply median filter
-            f               = interp1d(W,I,"linear",fill_value="extrapolate")
+            f               = PchipInterpolator(W,I)#,"linear",fill_value="extrapolate")
             If              = f(Ws)
             Im              = median_filter(If,N_med)
             In              = If/Im
@@ -588,8 +590,8 @@ def move_spec(V,I,Vc,sig_g):
     step    = dddv[1]-dddv[0]
     for ii in range(len(Vc)):
         ### Depending on which frame we're moving into
-        if len(I) == len(Vc): fi = interp1d(V,I[ii],kind="cubic",fill_value="extrapolate")
-        else:                 fi = interp1d(V,I[0],kind="cubic",fill_value="extrapolate")
+        if len(I) == len(Vc): fi = PchipInterpolator(V,I[ii])#,kind="linear",fill_value="extrapolate")
+        else:                 fi = PchipInterpolator(V,I[0])#,kind="linear",fill_value="extrapolate")
         I_tmp     = step * (fi(V+Vc[ii]+dddv[0])*G[0]+fi(V+Vc[ii]+dddv[-1])*G[-1]) * 0.5
         for hh in range(1,len(dddv)-1):
             I_tmp += step*fi(V+Vc[ii]+dddv[hh])*G[hh]  
