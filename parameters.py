@@ -13,7 +13,7 @@ REDUCE_DATA = True #do you want to reduce one or several pkl file that has been 
 CORREL_DATA = True #do you want to perform correlation from reduced pkl files ? 
 
 
-dir_global = "/home/adminloc/Bureau/Atmospheres/Data/GL15A/"
+dir_global = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/"
 
 ### Directory to save figures if plot = True
 dir_figures = dir_global+"Figures/"
@@ -42,10 +42,6 @@ read_name_fin = ["GL15A_read.pkl"]
 orders   =  np.arange(31,80)[::-1].tolist() 
 nord = len(orders)
 
-#list of orders we don't want to reduce for whatever reason
-# careful : this is sorted by number in the array and not ordrer number:
-# 0 is 79, 1 is 78 .... 48 is 31
-ind_rem = [] 
 
 
 ### Ephemerides (to compute orbital phase)
@@ -90,16 +86,16 @@ figure_name_transit = ["transit_GL15A"] #name of the figure file
 ###########################################################################
 
 
-planet_wavelength_nm_file = "/home/adminloc//Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/lambdastest-GL15A_onlyH2O.txt"
+planet_wavelength_nm_file = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Models/Results/lambdastest-GL15A_onlyH2O.txt"
 
 # Radius (in meters) for transit. CAREFUL : it is not the transit depth, it is indeed radius
-planet_radius_m_file = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Model/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
+planet_radius_m_file = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Models/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
 
 #planetary flux in J/m-2/s-1
-planet_flux_SI_file = "/home/adminloc//Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/fluxtest-GL15A_onlyH2O.txt"
+planet_flux_SI_file = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Models/Results/fluxtest-GL15A_onlyH2O.txt"
 K_inj = 120.
 V_inj = 10.
-amp_inj = 1
+amp_inj = 10
 
 
 
@@ -119,6 +115,9 @@ reduce_name_out  = ["GL15A_reduced.pkl",]
 #information file
 reduce_info_file = dir_figures+"info.dat"
 
+#list of orders we don't want to reduce for whatever reason
+
+orders_rem = []
 
 ### Correction of stellar contamination
 ### Only used if synthetic spectrum available
@@ -173,9 +172,6 @@ plot_red    = True
 numb        = 46
     
 
-#If you want to remove some orders, put them here
-orders_rem     = []
-
 
 #We can manually decide the where is the transit in the phase direction,
 #and exclude it for the calculation of the mean stellar spectrum.
@@ -229,7 +225,7 @@ dir_correl_out = dir_global+"correlated/"
 correl_name_out = ["GL15A_correlated.pkl"]
 
 
-dir_correl_mod = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Templates/GL15A_example_onlyH2O/"
+dir_correl_mod = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Templates/test-GL15A_onlyH2O/"
 
 #DO we select orders or take them all ? If True, provide your order selection
 # for each observation. If an order does not exist in the pkl file, it will 
