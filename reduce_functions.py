@@ -247,7 +247,38 @@ class Order:
         
         return W_sub, I_sub
      
-
+    def master_out_from_file(self,V_corr,W_ref,I_ref,sig_g,N_bor):      
+        ### If the order is kept - Remove high-SNR out-of-transit reference spectrum    
+        ### Start by computing mean spectrum in the stellar rest frame
+        I_ref_interp = PchipInterpolator(W_ref[np.isfinite(I_ref)], I_ref[np.isfinite(I_ref)])
+        I_ref_on_data = I_ref_interp(self.W_cl)
+        I_ref_on_data = I_ref_on_data[N_bor:-N_bor]
+        I_ref_on_data /= np.max(I_ref_on_data)
+        # I_bary    = move_spec(self.V_cl,self.I_cl,V_corr,sig_g)  ## Shift to stellar rest frame      
+        # I_med     = np.median(np.concatenate((I_bary[:n_ini],I_bary[n_end:]),axis=0),axis=0) ## Compute median out-of-transit   
+        I_med_geo = move_spec(self.V_cl[N_bor:-N_bor],np.array([I_ref_on_data]),-1.*V_corr,sig_g)  ## Move back ref spectrum to Geocentric frame
+        I_sub1    = np.zeros(self.I_cl[:,N_bor:-N_bor].shape)
+        for kk in range(len(self.I_cl)):
+            X          = np.array([np.ones(len(I_med_geo[kk])),I_med_geo[kk]],dtype=float).T
+            p,pe       = LS(X,self.I_cl[kk,N_bor:-N_bor])
+            Ip         = np.dot(X,p)
+            I_sub1[kk] = self.I_cl[kk,N_bor:-N_bor]/Ip
+            
+        ## Then compute reference spectrum in the Geocentric frame
+        I_med2  = np.median(I_sub1,axis=0) 
+        I_sub2  = np.zeros(I_sub1.shape)
+        for kk in range(len(I_sub1)):
+            X          = np.array([np.ones(len(I_med2)),I_med2],dtype=float).T
+            p,pe       = LS(X,I_sub1[kk])
+            Ip         = np.dot(X,p)
+            I_sub2[kk] = I_sub1[kk]/Ip    
+            
+            
+        ### Remove extremities to avoid interpolation errors
+        W_sub = self.W_cl[2*N_bor:-2*N_bor]
+        I_sub = I_sub1[:,N_bor:-N_bor]
+        
+        return W_sub, I_sub
 
     # -----------------------------------------------------------
     # Normalize and remove outlier for each residual spectrum
@@ -514,10 +545,10 @@ def get_transit_dates(wind):
     """
 
     n_ini,n_end = 1,1
-    if wind[0] > 0.0: n_ini = 0
+    if wind[0] > 0.5: n_ini = 0
     else: 
         cc = 0
-        while wind[cc] == 0.0:
+        while wind[cc] < 0.5:
             cc += 1
         n_ini = cc-1
     if wind[-1] > 0.0: n_end = len(wind)-1
