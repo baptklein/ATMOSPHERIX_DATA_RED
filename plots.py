@@ -103,12 +103,16 @@ def plot_reduction(phase,W1,I1,W2,I2,W3,I3,W4,I4,lab=["1","2","3","4"],filenam="
     Z    = I1
     zmin = I1.mean() - 3.*I1.std()
     zmax = I1.mean() + 3.*I1.std()
-    c    = plt.pcolor(X,Y,Z,cmap=cmap)#,vmin=zmin,vmax=zmax) 
-    plt.colorbar(c,ax=ax)
+    # c    = plt.pcolor(X,Y,Z,cmap=cmap,vmin=zmin,vmax=zmax) 
+    c    = plt.pcolor(I1) 
+
+    # plt.colorbar(c,ax=ax)
+    # plt.colorbar(c)
+
     ax.set_ylabel("Orbital phase")  
     ax.set_xticks([])        
-    if lmin>-1: ax.set_xlim(lmin,lmax)
-    else: ax.set_xlim(W4.min(),W4.max())
+    # if lmin>-1: ax.set_xlim(lmin,lmax)
+    # else: ax.set_xlim(W4.min(),W4.max())
 
     tx = lab[0]                           
     plt.text(np.min(W4)+1.5,0.8*np.max(phase),tx,color="w",fontsize=20,fontweight="bold")
@@ -119,13 +123,16 @@ def plot_reduction(phase,W1,I1,W2,I2,W3,I3,W4,I4,lab=["1","2","3","4"],filenam="
     Z    = I2
     zmin = I2.mean() - 3.*I2.std()
     zmax = I2.mean() + 3.*I2.std()
-    c    = plt.pcolor(X,Y,Z,cmap=cmap)#,vmin=zmin,vmax=zmax)   
+    # c    = plt.pcolor(X,Y,Z,cmap=cmap,vmin=zmin,vmax=zmax) 
+    c    = plt.pcolor(I2) 
+
     ax.set_ylabel("Orbital phase")  
     ax.set_xticks([])        
-    if lmin>-1: ax.set_xlim(lmin,lmax)
-    else: ax.set_xlim(W4.min(),W4.max())
+    # if lmin>-1: ax.set_xlim(lmin,lmax)
+    # else: ax.set_xlim(W4.min(),W4.max())
     
-    plt.colorbar(c,ax=ax)
+    # plt.colorbar(c,ax=ax)
+    # plt.colorbar(c)
 
     tx = lab[1]                           
     plt.text(np.min(W4)+1.5,0.8*np.max(phase),tx,color="w",fontsize=20,fontweight="bold")
@@ -137,13 +144,16 @@ def plot_reduction(phase,W1,I1,W2,I2,W3,I3,W4,I4,lab=["1","2","3","4"],filenam="
     Z    = I3
     zmin = I3.mean() - 3.*I3.std()
     zmax = I3.mean() + 3.*I3.std()
-    c    = plt.pcolor(X,Y,Z,cmap=cmap)#,vmin=zmin,vmax=zmax)  
+    # c    = plt.pcolor(X,Y,Z,cmap=cmap,vmin=zmin,vmax=zmax) 
+    c =  plt.pcolor(I3)
     ax.set_ylabel("Orbital phase")  
     ax.set_xticks([])        
-    if lmin>-1: ax.set_xlim(lmin,lmax)
-    else: ax.set_xlim(W4.min(),W4.max())
+    # if lmin>-1: ax.set_xlim(lmin,lmax)
+    # else: ax.set_xlim(W4.min(),W4.max())
     
-    plt.colorbar(c,ax=ax)
+#    plt.colorbar(c,ax=ax)
+    # plt.colorbar(c)
+
     tx = lab[2]                           
     plt.text(np.min(W4)+1.5,0.8*np.max(phase),tx,color="w",fontsize=20,fontweight="bold")
 
@@ -154,12 +164,16 @@ def plot_reduction(phase,W1,I1,W2,I2,W3,I3,W4,I4,lab=["1","2","3","4"],filenam="
     Z    = I4
     zmin = I4.mean() - 3.*I4.std()
     zmax = I4.mean() + 3.*I4.std()
-    c    = plt.pcolor(X,Y,Z,cmap=cmap)#,vmin=zmin,vmax=zmax)  
+    # c    = plt.pcolor(X,Y,Z,cmap=cmap,vmin=zmin,vmax=zmax)  
+    c =  plt.pcolor(I4)
+
     ax.set_ylabel("Orbital phase")  
-    if lmin>-1: ax.set_xlim(lmin,lmax)
-    else: ax.set_xlim(W4.min(),W4.max())
+    # if lmin>-1: ax.set_xlim(lmin,lmax)
+    # else: ax.set_xlim(W4.min(),W4.max())
     
-    plt.colorbar(c,ax=ax)
+    # plt.colorbar(c,ax=ax)
+    # plt.colorbar(c)
+
     ax.set_xlabel("Wavelength [nm]")
 
     tx = lab[3]                           

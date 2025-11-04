@@ -5,6 +5,7 @@ import speed_functions as speed_func
 import read_functions as read_func
 import reduce_functions as red_func
 import correlate_functions as corr_func
+from astropy.io import fits
 
 import time
 import plots
@@ -29,8 +30,9 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
         list_ord.append(read_func.Order(prm.orders[kk])) ### Initialize list of Order objects
     list_ord,airmass,T_obs,berv,snr_mat = read_func.read_data_spirou(dir_data_i,list_ord,nord)
     print("DONE")
-    
-    
+
+
+
     ### Pre-process data: correct for blaze and remove NaNs
     print("\nRemove NaNs")
     cmp = 0
@@ -67,9 +69,9 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
         else:
             window  = np.ones(len(T_obs))
             flux  = np.ones(len(T_obs))
-
+            
     print("DONE")
-    
+    print(window)
     ### Compute Planet-induced RV
     if prm.ep <1e-3:
         Vstar_planet           = speed_func.rvs_circular(phase,prm.Ks)
@@ -158,6 +160,11 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
                         O.I_raw[tt] = O.I_raw[tt]*(1.+O.I_syn[tt]*(prm.Rp/prm.Rs)**2/(np.pi*B((O.W_raw*1.e-9)/(1.0+(V_planet_inj[tt]+Vc[tt])/(c0/1000)),prm.T_star)))
 
 
+        # plt.plot(T_obs,V_planet_inj,'x')
+        # plt.plot(T_obs,phase,'x')
+
+        # exit()
+
         if keep_ord[nn]:
             WW.append(O.W_raw)
             Ir.append(O.I_raw)
@@ -228,6 +235,8 @@ def reduce(prm_name,name_in,name_out):
     #Create a list of orders to remove
     nord = len(list_ord)
     
+
+    # exit()
     #Do we exclude some orders ?
     ind_rem = []
     #Do we exclude some orders ?
@@ -243,6 +252,9 @@ def reduce(prm_name,name_in,name_out):
         n_ini,n_end = red_func.get_transit_dates(window)    
     else:
         n_ini,n_end = prm.n_ini_fix,prm.n_end_fix
+        
+    print(n_ini,n_end)
+
 
 
     t0          = time.time()
@@ -256,6 +268,13 @@ def reduce(prm_name,name_in,name_out):
          V_brog = -berv*1000
          IS_corr = np.load(prm.IC_name)
          WS_corr = np.load(prm.WC_name)
+
+    if prm.master_from_file:
+        W_ref_file = fits.open(prm.master_W_ref_file)
+        W_ref = W_ref_file[0].data
+        
+        I_ref_file = fits.open(prm.master_I_ref_file)
+        I_ref = I_ref_file[1].data
 
     print("START DATA REDUCTION")
     for nn in range(nord):
@@ -316,11 +335,20 @@ def reduce(prm_name,name_in,name_out):
                 
                 
         # #Delete master out of transit spectrum, in stellar and telluric fram
+        if prm.delete_master:
+            if prm.master_from_file:
+                W_ref_ord = W_ref[nn] 
+                I_ref_ord = I_ref[nn]
+                O.W_sub, O.I_sub = O.master_out_from_file(V_corr,W_ref_ord,
+                                                          I_ref_ord,prm.sig_g,prm.N_bor)
+            else:
+                O.W_sub, O.I_sub = O.master_out(V_corr,n_ini,n_end,prm.sig_g,prm.N_bor)
+        else:
+            O.W_sub, O.I_sub = O.W_cl,O.I_cl
 
-        O.W_sub, O.I_sub = O.master_out(V_corr,n_ini,n_end,prm.sig_g,prm.N_bor)
-
+        
         #second normalisation. I would recommend simple or old to delete modal noise,
-        # but you can try not to do it for test
+        # but you can try not to do it for test. 
         if prm.second_norm_type =="simple":
             O.I_norm2 = np.zeros(O.I_sub[:,int(prm.N_med/2):-int(prm.N_med/2)].shape)
             for i in range(len(O.I_norm2)):
@@ -338,7 +366,7 @@ def reduce(prm_name,name_in,name_out):
             
         elif prm.second_norm_type == "none":
             O.I_norm2 = O.I_sub
-            O.W_norm = O.W_sub
+            O.W_norm2 = O.W_sub
             
         ### Correct for bad pixels
         O.W_norm2_pix,O.I_norm2_pix,tmp= O.filter_pixel(O.W_norm2,O.I_norm2,prm.deg_px,prm.sig_out)
@@ -356,7 +384,7 @@ def reduce(prm_name,name_in,name_out):
         #DO we detrend airmass ? 
         if prm.det_airmass:
             I_log           = np.log(O.I_norm2_pix)
-            I_det_log       = O.detrend_airmass(O.W_norm2_pix,O.I_norm2_pix,airmass,prm.deg_airmass)
+            I_det_log       = O.detrend_airmass(O.W_norm2_pix,I_log,airmass,prm.deg_airmass)
             I_det           = np.exp(I_det_log)
             O.I_fin = I_det
         else:
@@ -365,11 +393,13 @@ def reduce(prm_name,name_in,name_out):
             
             
         #IF we have some weird orders, we rather delete them
+
         XX    = np.where(np.isnan(np.log(O.I_fin)))[0]
         if len(XX) > 0:
             print("ORDER",O.number,"intractable: DISCARDED\n")
             ind_rem.append(nn)
             continue
+
         
         #PCA commands
         if prm.mode_pca =="pca":
@@ -400,7 +430,7 @@ def reduce(prm_name,name_in,name_out):
             print("Plot data reduction steps")
             figure_reduce_name =  prm.dir_figures+name_out[:-4]+"_reduction_" + str(prm.numb) + ".png"
             lab = ["Blaze-corrected spectra","Median-corrected spectra","Normalised spectra","PCA-corrected spectra"]
-            plots.plot_reduction(phase,O.W_cl,O.I_cl-O.I_cl.mean(),O.W_sub,O.I_sub-1.,O.W_fin,O.I_fin-1.,O.W_fin,O.I_pca,lab,figure_reduce_name)        
+            plots.plot_reduction(phase%1,O.W_cl,O.I_cl-O.I_cl.mean(),O.W_sub,O.I_sub-1.,O.W_fin,O.I_fin-1.,O.W_fin,O.I_pca,lab,figure_reduce_name)        
 
     file.close()        
 

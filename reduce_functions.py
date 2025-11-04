@@ -7,6 +7,8 @@ from astropy.modeling import fitting, polynomial
 from astropy.stats import sigma_clip
 import pickle
 
+from scipy.optimize import least_squares
+
 from sklearn.decomposition import PCA
 from wpca import WPCA
 
@@ -256,27 +258,36 @@ class Order:
         I_ref_on_data /= np.max(I_ref_on_data)
         # I_bary    = move_spec(self.V_cl,self.I_cl,V_corr,sig_g)  ## Shift to stellar rest frame      
         # I_med     = np.median(np.concatenate((I_bary[:n_ini],I_bary[n_end:]),axis=0),axis=0) ## Compute median out-of-transit   
-        I_med_geo = move_spec(self.V_cl[N_bor:-N_bor],np.array([I_ref_on_data]),-1.*V_corr,sig_g)  ## Move back ref spectrum to Geocentric frame
-        I_sub1    = np.zeros(self.I_cl[:,N_bor:-N_bor].shape)
+        I_med_geo = move_spec(self.V_cl[N_bor:-N_bor],np.array([I_ref_on_data]),V_corr,sig_g)  ## Move back ref spectrum to Geocentric frame
+        I_med_geo = I_med_geo[:,N_bor:-N_bor]
+        I_sub1    = np.zeros(self.I_cl[:,2*N_bor:-2*N_bor].shape)
+        # for kk in range(len(self.I_cl)):
+        #     X          = np.array([np.ones(len(I_med_geo[kk])),I_med_geo[kk]],dtype=float).T
+        #     p,pe       = LS(X,self.I_cl[kk,2*N_bor:-2*N_bor])
+        #     Ip         = np.dot(X,p)
+        #     I_sub1[kk] = self.I_cl[kk,2*N_bor:-2*N_bor]/Ip
+        
+        x0 = [1.,1.]
         for kk in range(len(self.I_cl)):
-            X          = np.array([np.ones(len(I_med_geo[kk])),I_med_geo[kk]],dtype=float).T
-            p,pe       = LS(X,self.I_cl[kk,N_bor:-N_bor])
-            Ip         = np.dot(X,p)
-            I_sub1[kk] = self.I_cl[kk,N_bor:-N_bor]/Ip
+            res =least_squares(LS_func_Flo,x0,
+                               args=(I_med_geo[kk],self.I_cl[kk,2*N_bor:-2*N_bor]),
+                               loss='cauchy',f_scale=0.1) 
+            I_fit = res.x[0]*I_med_geo[kk]+res.x[1]
+            I_sub1[kk] = self.I_cl[kk,2*N_bor:-2*N_bor]/I_fit
             
         ## Then compute reference spectrum in the Geocentric frame
-        I_med2  = np.median(I_sub1,axis=0) 
-        I_sub2  = np.zeros(I_sub1.shape)
-        for kk in range(len(I_sub1)):
-            X          = np.array([np.ones(len(I_med2)),I_med2],dtype=float).T
-            p,pe       = LS(X,I_sub1[kk])
-            Ip         = np.dot(X,p)
-            I_sub2[kk] = I_sub1[kk]/Ip    
+        # I_med2  = np.median(I_sub1,axis=0) 
+        # I_sub2  = np.zeros(I_sub1.shape)
+        # for kk in range(len(I_sub1)):
+        #     X          = np.array([np.ones(len(I_med2)),I_med2],dtype=float).T
+        #     p,pe       = LS(X,I_sub1[kk])
+        #     Ip         = np.dot(X,p)
+        #     I_sub2[kk] = I_sub1[kk]/Ip    
             
             
         ### Remove extremities to avoid interpolation errors
         W_sub = self.W_cl[2*N_bor:-2*N_bor]
-        I_sub = I_sub1[:,N_bor:-N_bor]
+        I_sub = I_sub1
         
         return W_sub, I_sub
 
@@ -760,5 +771,9 @@ def calculate_final_metrics(O,N_px,file):
     txt = str(O.number) + "  " + str(len(O.W_fin)) + "  " + str(np.mean(O.SNR)) + "  " + str(np.mean(O.SNR_mes)) + "  " + str(np.mean(O.SNR_mes_pca)) + "  " + str(O.n_com) + "\n"
     file.write(txt)            
        
-        
+def LS_func_Flo(x,star_spec,obs_spec):
+
+    return (x[0]*star_spec+x[1]-obs_spec)**2
+  
+
 

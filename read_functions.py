@@ -9,6 +9,7 @@ import numpy as np
 import os
 from astropy.io import fits
 from scipy.interpolate import PchipInterpolator
+from scipy.interpolate import interp1d
 from global_parameters import c0, G
 
 import batman

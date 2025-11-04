@@ -13,7 +13,7 @@ REDUCE_DATA = True #do you want to reduce one or several pkl file that has been 
 CORREL_DATA = True #do you want to perform correlation from reduced pkl files ? 
 
 
-dir_global = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/"
+dir_global = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/Test/"
 
 ### Directory to save figures if plot = True
 dir_figures = dir_global+"Figures/"
@@ -60,25 +60,25 @@ transiting  = False  ## Only used in emission, to calculate the window function 
 Rp       = 0.5485*69911000. #Planet radius  [m]
 Rs       = 0.375*696340000.  #Stellar radius [m] 
 Ms       = 0.4*1.989*1e30     #Stellar mass [kg] 
-ip       = 90.0    #Transit incl.  [deg]
+ip       = 50.0    #Transit incl.  [deg]
 ap       = 14.0534030   #Semi-maj axis  [R_star]
-ep       = 0.    #Eccentricity of Pl. orbit
-wp       = 0.0     #Arg of periaps [deg]
+ep       = 0.  #Eccentricity of Pl. orbit
+wp       = 344.    #Arg of periaps [deg]
 ld_mod   = "quadratic"     #Limb-darkening model ["nonlinear", "quadratic", "linear"]
 ld_coef  = [0.0156,0.313]  #Limb-darkening coefficients 
 
 T_star = 3600.  #stellar temperature [K]. Only necessary for injecting a planet in emission.
 ### Stellar radial velocity info
-Ks        = 0.164    #RV semi-amplitude of the star orbital motion due to planet [km/s]
+Ks        = 0.    #RV semi-amplitude of the star orbital motion due to planet [km/s]
 V0        = 11.73    #Stellar systemic velocity [km/s]
-
 
 
 ### Plots
 plot_read     = True     # If True, plot transit info
-figure_name_transit = ["transit_GL15A"] #name of the figure file
-
-
+figure_name_transit = []
+for pkl_name in read_name_fin:
+    figure_name_transit.append('transit_'+pkl_name[:-4])
+    
 ###########################################################################
 ###########################################################################
 ################### PARAMETERS TO INJECT PLANET 
@@ -95,7 +95,7 @@ planet_radius_m_file = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptod
 planet_flux_SI_file = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Models/Results/fluxtest-GL15A_onlyH2O.txt"
 K_inj = 120.
 V_inj = 10.
-amp_inj = 10
+amp_inj = 1.
 
 
 
@@ -117,7 +117,7 @@ reduce_info_file = dir_figures+"info.dat"
 
 #list of orders we don't want to reduce for whatever reason
 
-orders_rem = []
+orders_rem =np.append(31,np.arange(34,80)).tolist()
 
 ### Correction of stellar contamination
 ### Only used if synthetic spectrum available
@@ -130,13 +130,35 @@ dep_min  = 0.7  # remove all data when telluric relative absorption > 1 - dep_mi
 thres_up = 0.1      # Remove the line until reaching 1-thres_up
 Npt_lim  = 800      # If the order contains less than Npt_lim points, it is discarded from the analysis
 
+#Do we delete a master spectrum ?  
+delete_master = True
+
+
+#Do we want this master spectrum to be from the APERO Solution ? 
+#Careful, if  we do, we cannot have a prenormalisation hence first_norm_type must
+#be set to "none"
+master_from_file = False
+master_W_ref_file = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Template_APERO/REF_WAVE_2400416c_AB.fits"
+master_I_ref_file = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Template_APERO/Template_HD195689_tellu_obj_AB.fits"
+
+#If not from apero, we can then manually decide the where is the transit in the phase direction,
+#and exclude it for the calculation of the mean stellar spectrum.
+#If set_window = False, the transit window defines n_ini and n_end
+set_window = False
+n_ini_fix,n_end_fix = -1,-1   ### Get transits start and end indices
+
+
+
 ### Interpolation parameters
-pixel    = np.linspace(-0.5,0.5,15)   ### Sampling a SPIRou pixel in velocity space -- Width ~ 2.28 km/s
+pixel    = np.linspace(-1.14,1.14,11)   ### Sampling a SPIRou pixel in velocity space -- Width ~ 2.28 km/s
 sig_g    = 2.28                       ### STD of one SPIRou px in km/s
 N_bor    = 15                           ### Nb of pts removed at each extremity (twice)
 
-### Normalisation parameters. We normalize once before calculating the master spectrum, and once afterwards
-### theoretically to remove nodal noise
+
+
+
+
+### Normalisation parameters
 first_norm_type = "percentile"
 second_norm_type = "old"
 
@@ -154,14 +176,13 @@ deg_airmass = 2
 mode_pca    = "pca"                     ### "pca" or "autoencoder"
 wpca = False   #Use weighted pca
 auto_tune   = True                  ### Automatic tuning of number of components
-factor_pca = 1. #actor in the auto tune: every PC above factor*white_noise_mean_eigenvalue is suppressed
-min_pca  = 1 #minimim number of removed components
+factor_pca = 1. #factor in the auto tune: every PC above factor*white_noise_mean_eigenvalue is suppressed
+min_pca  = 0 #minimim number of removed components
 mode_norm_pca = "global" #how to remove mean and std in the data before PCA. Four possibilities:
                          # "none" : data untouched.
                          # "global" : suppression of mean and division by the std of the whole data set 
                          # 'per_pix': same as global but column by colum (per pixel)
                          # 'per_obs': same as global but line by line (per observation)
-            
 
  ### Nb of removed components if auto tune is false
 npca        = np.array(1*np.ones(49),dtype=int)     
@@ -169,19 +190,14 @@ npca        = np.array(1*np.ones(49),dtype=int)
 
 ### Plot info
 plot_red    = True
-numb        = 46
+numb        = 33
     
 
 
-#We can manually decide the where is the transit in the phase direction,
-#and exclude it for the calculation of the mean stellar spectrum.
-#If set_window = False, the transit window defines n_ini and n_end
-set_window = True
-n_ini_fix,n_end_fix = -1,-1    ### Get transits start and end indices. If you want everything, put -1 -1 e.g. in emission
+
 
 ### Size of the estimation of the std of the order for final metrics
 N_px          = 200
-
 
 
 
@@ -197,14 +213,14 @@ pixel_correl = np.linspace(-0.5,0.5,15)
 weights= np.ones(15)
 
 #Kp intervals
-Kpmin = 0.0
+Kpmin = -200.0
 Kpmax =200.0
-Nkp = 81
+Nkp = 101
 Kp_array = np.linspace(Kpmin,Kpmax,Nkp)
 
 #Vsys intervals
-Vmin = -20.
-Vmax= 20
+Vmin = -40.
+Vmax= 40
 Nv = 81
 Vsys_array = np.linspace(Vmin,Vmax,Nv)
 
