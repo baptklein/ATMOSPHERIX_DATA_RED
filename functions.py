@@ -71,7 +71,6 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
             flux  = np.ones(len(T_obs))
             
     print("DONE")
-    print(window)
     ### Compute Planet-induced RV
     if prm.ep <1e-3:
         Vstar_planet           = speed_func.rvs_circular(phase,prm.Ks)
@@ -111,23 +110,7 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
         plt.close()
         print("DONE")
     
-        
-    #### Prepare planet injection
-    if prm.INJ_PLANET:
-        print("\n Inject planet")
 
-        if prm.ep <1e-3:
-            V_planet_inj = speed_func.rvp_circular(phase, prm.K_inj)+prm.V_inj
-        else:
-            V_planet_inj = speed_func.rvp(phase,prm.K_inj,prm.wp,prm.ep)+prm.V_inj
-            
-        
-        if prm.type_obs=="transmission":
-            W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_radius_m_file)
-            transit_depth    = (I_mod / prm.Rs)**2
-        else:
-            W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_flux_SI_file)
-            planet_flux = I_mod
     ### Save as pickle
     Ir  = []
     Ia  = []
@@ -139,31 +122,7 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
     for nn in range(nord):
         O  = list_ord[nn]
         
-        ##### PLANET INJECTION #######
-        if prm.INJ_PLANET:
-            Wmin,Wmax  = 0.95*O.W_raw.min(),1.05*O.W_raw.max() 
-            indm      = np.where((W_mod>Wmin)&(W_mod<Wmax))[0]
-            W_sel     = W_mod[indm]
-            if np.min(W_sel) > 0.995*np.min(O.W_raw) or np.max(W_sel) < 1.005*np.max(O.W_raw):
-                print("Order",O.number,"incomplete because the injected model is not wide enough in wavelength -- discarded")
-                keep_ord[nn] = 0
-            else:
-                if prm.type_obs=="transmission":
-                    I_sel     = transit_depth[indm]
-                    O.add_planet(prm.type_obs,W_sel,I_sel,window,V_planet_inj,Vc,prm.amp_inj)
-                    O.I_raw = O.I_raw*(1.-O.I_syn)
-                else:
-                    I_sel     = planet_flux[indm]
-                    O.add_planet(prm.type_obs,W_sel,I_sel,window,V_planet_inj,Vc,prm.amp_inj)
-                    for tt in range(len(T_obs)):
-                        ### petitRADTRANS outputs must be in SI.
-                        O.I_raw[tt] = O.I_raw[tt]*(1.+O.I_syn[tt]*(prm.Rp/prm.Rs)**2/(np.pi*B((O.W_raw*1.e-9)/(1.0+(V_planet_inj[tt]+Vc[tt])/(c0/1000)),prm.T_star)))
 
-
-        # plt.plot(T_obs,V_planet_inj,'x')
-        # plt.plot(T_obs,phase,'x')
-
-        # exit()
 
         if keep_ord[nn]:
             WW.append(O.W_raw)
@@ -223,7 +182,93 @@ def read(prm_name,dir_data_i,name_fin_i,figure_name="transit_info"):
         read_paramfile.write(write_params)
     
     
+def inject_planet(prm_name,dir_data_in,dir_data_out,name_in,name_out):
+        ##### PLANET INJECTION #######
+    print("\n Inject planet")
+
+    prm=importlib.import_module(prm_name)
     
+    #### Prepare planet injection
+
+    
+    T_obs,phase,window,berv,vstar,airmass,SN,list_ord= red_func.read_data_and_create_list(dir_data_in+name_in)
+    nord = len(list_ord)
+    
+    keep_ord = np.ones(nord,dtype=bool)
+
+    if prm.ep <1e-3:
+        V_planet_inj = speed_func.rvp_circular(phase, prm.K_inj)+prm.V_inj
+    else:
+        V_planet_inj = speed_func.rvp(phase,prm.K_inj,prm.wp,prm.ep)+prm.V_inj
+        
+    
+    if prm.type_obs=="transmission":
+        W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_radius_m_file)
+        transit_depth    = (I_mod / prm.Rs)**2
+    else:
+        W_mod,I_mod      = np.loadtxt(prm.planet_wavelength_nm_file),np.loadtxt(prm.planet_flux_SI_file)
+        planet_flux = I_mod
+
+
+    Vc           = vstar-berv  #Geocentric-to-barycentric correction
+
+    ### Save as pickle
+    Ir  = []
+    Ia  = []
+    Bl  = []
+    WW  = []
+    SN  = []
+
+    for nn in range(nord):
+        O  = list_ord[nn]
+        
+    
+        Wmin,Wmax  = 0.95*O.W_raw.min(),1.05*O.W_raw.max() 
+        indm      = np.where((W_mod>Wmin)&(W_mod<Wmax))[0]
+        W_sel     = W_mod[indm]
+        if np.min(W_sel) > 0.995*np.min(O.W_raw) or np.max(W_sel) < 1.005*np.max(O.W_raw):
+            print("Order",O.number,"incomplete because the injected model is not wide enough in wavelength -- discarded")
+            keep_ord[nn] = 0
+        else:
+            if prm.type_obs=="transmission":
+                I_sel     = transit_depth[indm]
+                O.add_planet(prm.type_obs,W_sel,I_sel,window,V_planet_inj,Vc,prm.amp_inj)
+                O.I_raw = O.I_raw*(1.-O.I_syn)
+            else:
+                I_sel     = planet_flux[indm]
+                O.add_planet(prm.type_obs,W_sel,I_sel,window,V_planet_inj,Vc,prm.amp_inj)
+                for tt in range(len(T_obs)):
+                    ### petitRADTRANS outputs must be in SI.
+                    O.I_raw[tt] = O.I_raw[tt]*(1.+O.I_syn[tt]*(prm.Rp/prm.Rs)**2/(np.pi*B((O.W_raw*1.e-9)/(1.0+(V_planet_inj[tt]+Vc[tt])/(c0/1000)),prm.T_star)))
+        
+            if keep_ord[nn]:
+                WW.append(O.W_raw)
+                Ir.append(O.I_raw)
+                Ia.append(O.I_atm)
+                Bl.append(O.blaze)
+                SN.append(O.SNR)
+                
+            ### Namely: 
+            #           - orders: List of orders -- absolute nbs
+            #           - WW:     Wavelength vector for each order [list obj (N_order,N_wav)]
+            #           - Ir:     Intensity values for each order [list of 2D arrays (N_order,N_obs,N_wav)]
+            #           - Blaze:  Blaze values for each order [list of 2D arrays (N_order,N_obs,N_wav)]
+            #           - Ia:     Telluric spectra for each order [list of 2D arrays (N_order,N_obs,N_wav)]
+            #           - T_obs:  Observation dates [BJD]
+            #           - phase:  Planet orbital phase - centered on mid-transit
+            #           - window: Transit window (1 --> mid-transit; 0 --> out-of-transit)
+            #           - berv:   BERV values [km/s]
+            #           - V0+Vp:  Stellar RV [km/s]
+            #           - airmass:Airmass values
+            #           - SN:     Signal-to-noise values for each order [N_order,N_obs]
+            
+    savedata = (np.array(prm.orders)[keep_ord],WW,Ir,Bl,Ia,T_obs,phase,window,berv,vstar,airmass,SN)
+    with open(dir_data_out+name_out, 'wb') as specfile:
+        pickle.dump(savedata,specfile)
+
+    print("\n inject model"+prm.planet_flux_SI_file+" into file "+name_in)
+    print("\n Data saved in",prm.dir_save_read+name_out)
+
     
     
 def reduce(prm_name,name_in,name_out):
@@ -546,7 +591,7 @@ def correlate(prm_name):
     
         #Do we calculate on the whole data set or just when transit window > to a certain value ?
         if prm.select_phase:
-            pos = np.where(np.array(window)>prm.min_window)
+            pos = np.where((np.array(window)>prm.min_window) & (np.array(window)<prm.max_window))
             phase2 = np.array(phase)[pos]
             window2 = np.array(window)[pos]
         else:

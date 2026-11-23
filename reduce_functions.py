@@ -150,7 +150,50 @@ class Order:
 
 
 
+    def add_planet(self,type_obs,Wm,Im,window,planet_speed,Vc,ampl=1.0,pixel=np.linspace(-1.13,1.13,11)):
 
+        """
+        --> Inputs:      - Order object
+                         - type_obs (str) emission or tranmission
+                         - Wm:      Wavelength vector of the planet atmosphere template
+                         - Im:      Template of wavelength-dependent transit depth (i.e., model) 
+                         - window:  Transit window
+                         - planet_speed : speed of the planet along the orbit
+                         - Vc:      Velocimetric correction to move from Geocentric frame to stellar rest frame
+                                    Typically: Vc = Stellar systemic vel. + planet-signature RV - Barycentric Earth RV 
+                         - ampl:    Amplification factor: amplify the injected planetary signal
+
+        --> Outputs:     - self.I_raw_pl
+        """
+        self.Wm    = Wm
+        self.Im    = ampl*(Im-np.max(Im))+np.max(Im)        
+        self.I_syn = np.zeros(self.I_raw.shape)
+
+
+        Imm  = self.Im#/np.min(flux)
+        if type_obs =="transmission":
+            tdepth_interp     = PchipInterpolator(self.Wm,Imm)  # Interpolate model
+        else:
+            flux_interp = PchipInterpolator(self.Wm,Imm)  
+            
+        if type_obs =="transmission":
+            for nn in range(len(self.I_raw)): # For each observation date
+                if window[nn] != 0.0:
+                    I_ttt = np.zeros(len(self.W_raw))
+                    
+                    # Shift model in the Geocentric frame
+                    for pp in pixel: 
+                        I_ttt += tdepth_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0))))
+                    self.I_syn[nn] = I_ttt/len(pixel)*window[nn]
+                
+        else:
+            for nn in range(len(self.I_raw)): # For each observation date
+                I_ttt = np.zeros(len(self.W_raw))
+                # Shift model in the Geocentric frame
+                for pp in pixel: I_ttt += flux_interp(self.W_raw/(1.0+((planet_speed[nn]+Vc[nn]+pp)/(c0))))
+                self.I_syn[nn]  = I_ttt/len(pixel)
+                
+    
     
     
         

@@ -23,6 +23,16 @@ if prm.READ_DATA:
             figure_name = "transit_info"
         func.read(prm_name,prm.dir_data[i],prm.read_name_fin[i],figure_name=figure_name) #We read the data, folder by folder
         
+if prm.INJ_PLANET:
+    if len(prm.planet_name_in) != nobs or len(prm.planet_name_out) != nobs:
+        print("planet_name_in and planet_nameèout must be of length num_obs. Exiting")
+        sys.exit()   
+    for i in range(nobs):
+        func.inject_planet(prm_name,prm.dir_save_read,prm.dir_inj,prm.planet_name_in[i],prm.planet_name_out[i]) #We read the data, folder by folder
+
+        
+        
+        
 if prm.REDUCE_DATA:
     if  len(prm.reduce_name_in) != nobs or len(prm.reduce_name_out) != nobs:
         print("reduce_name_in and reduce_name_out must be of length num_obs. Exiting")
