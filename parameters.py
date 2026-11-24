@@ -14,7 +14,7 @@ CORREL_DATA = True #do you want to perform correlation from reduced pkl files ?
 
 planet_name = "GL15A"
 
-dir_global = f"/home/adminloc/Bureau/Atmospheres/Data/{planet_name}/"
+dir_global = f"/home/florian/Bureau/Atmosphere_SPIRou/Data/{planet_name}/"
 
 ### Directory to save figures if plot = True
 dir_figures = dir_global+"Figures/"
