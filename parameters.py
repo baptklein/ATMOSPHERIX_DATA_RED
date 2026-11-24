@@ -12,8 +12,9 @@ INJ_PLANET = True
 REDUCE_DATA = True #do you want to reduce one or several pkl file that has been read beforehand ?
 CORREL_DATA = True #do you want to perform correlation from reduced pkl files ? 
 
+planet_name = "GL15A"
 
-dir_global = "/home/florian/Bureau/Atmosphere_SPIRou/Data/Gl15A/Test/"
+dir_global = f"/home/adminloc/Bureau/Atmospheres/Data/{planet_name}/"
 
 ### Directory to save figures if plot = True
 dir_figures = dir_global+"Figures/"
@@ -31,11 +32,20 @@ num_obs = 1 #Number of observing nights that will be treated independently
 
 
 ### Directory where all the "t.fits" files are stores 
-dir_data = [dir_global+"/fits/"]
+dir_data = [dir_global+"fits/"]
+
+
+### In case of multiple observing nights
+### Inside the "fits" folder, create a folder for each observing night (name the folder as you prefer)
+# dir_data = [
+#     dir_global + "fits/date_night1/",
+#     dir_global + "fits/date_night2/"
+# ]
+
 
 ### Name of the pickle file to store the info in 
 dir_save_read = dir_global+"read/"
-read_name_fin = ["GL15A_read.pkl"]
+read_name_fin = [f"{planet_name}_read.pkl"]
 
 
 ### List of SPIRou absolute orders -- Reddest: 31; Bluest: 79
@@ -86,13 +96,18 @@ for pkl_name in read_name_fin:
 ###########################################################################
 
 
-planet_wavelength_nm_file = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Models/Results/lambdastest-GL15A_onlyH2O.txt"
+dir_inj = dir_save_read
+planet_name_in = [f"{planet_name}_read.pkl"]
+planet_name_out = [f"{planet_name}_read_inject.pkl"]
+
+
+planet_wavelength_nm_file = "./Models/Results/lambdastest-GL15A_onlyH2O.txt"
 
 # Radius (in meters) for transit. CAREFUL : it is not the transit depth, it is indeed radius
 planet_radius_m_file = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Models/Results/RpGL15A_HD189_onlyH2O-VMR3-T900.txt"
 
 #planetary flux in J/m-2/s-1
-planet_flux_SI_file = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Models/Results/fluxtest-GL15A_onlyH2O.txt"
+planet_flux_SI_file = "./Models/Results/fluxtest-GL15A_onlyH2O.txt"
 K_inj = 120.
 V_inj = 10.
 amp_inj = 1.
@@ -109,9 +124,15 @@ amp_inj = 1.
 
 dir_reduce_in = dir_global+"read/"
 dir_reduce_out = dir_global+"reduced/"
-reduce_name_in = ["GL15A_read.pkl",]
+reduce_name_in = [f"{planet_name}_read_inject.pkl",]
+
+suffix_reduced = "_reduced"
 #output fil
-reduce_name_out  = ["GL15A_reduced.pkl",]
+
+reduce_name_out =[]
+for i in range(num_obs):
+    reduce_name_out.append(reduce_name_in[i][:-4]+suffix_reduced+'.pkl')
+    
 #information file
 reduce_info_file = dir_figures+"info.dat"
 
@@ -229,7 +250,7 @@ Vsys_array = np.linspace(Vmin,Vmax,Nv)
 dir_correl_in = dir_global+"reduced/"
 
 # correl_name_in = ["HD189_Sep18.pkl",]
-correl_name_in = ["GL15A_reduced.pkl"]
+correl_name_in = [f"{planet_name}_read_inject_reduced.pkl"]
 
 
 
@@ -237,11 +258,16 @@ correl_name_in = ["GL15A_reduced.pkl"]
 save_ccf = True
 dir_correl_out = dir_global+"correlated/"
 
-# correl_name_out = ["HD189_Sep18.pkl",]
-correl_name_out = ["GL15A_correlated.pkl"]
+suffix_correl = "_correlated"
 
 
-dir_correl_mod = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/Templates/test-GL15A_onlyH2O/"
+correl_name_out =[]
+for i in range(num_obs):
+    correl_name_out.append(correl_name_in[i][:-4]+suffix_correl+'.pkl')
+
+
+
+dir_correl_mod = "./Templates/test-GL15A_onlyH2O/"
 
 #DO we select orders or take them all ? If True, provide your order selection
 # for each observation. If an order does not exist in the pkl file, it will 
@@ -255,6 +281,7 @@ list_ord_correl = np.arange(32,34) #not used if select_ord = False
 #True, we only select observation that have a transit window > min_window
 select_phase = True
 min_window = 0.2
+max_window=1.1
 
 #Interpolation factor for the speed array. If you d'ont know what that means, choose something between 1 and 10
 int_speed = 5
