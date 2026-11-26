@@ -18,26 +18,27 @@ R_unit = "m"
 lambdas_unit = "micron"
 lambdas_unit = "nano"
 
-suffix = '_broadened'
+suffix = '_rotated6500_sigma1800'
 
-name = "UpsAnd-onlyH2O_emission"
+name = "KELT9_onlyFe_H-"
 
 
 
-dire = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/"
+dire = "/home/florian/Bureau/Atmosphere_SPIRou/Models/transmission/Results/"
+# dire = "/home/florian/tmp/"
 dire_res = dire
 
 #SPIRou
 list_ord = np.arange(31,80)
-wlen_file ="/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/wlen.dat"
+wlen_file ="/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/wlen.dat"
 
 
-vrot = 0.0
+vrot = 6500.0
 superrot=0.0
 
 
 fr = np.loadtxt(dire+"lambdas"+name+".txt")
-R = np.loadtxt(dire+"flux"+name+".txt")
+R = np.loadtxt(dire+"Rp"+name+".txt")
 
 if R_unit == "cm":
     R = R/100.
@@ -63,7 +64,7 @@ for i in range(len(list_ord)):
     for j in range(np.shape(lambdas)[0]) :
         out[0,j] = lambdas[j]
         out[1,j] = R_ord[j]
-    conv_wl,conv_R = conv.rotate( out[1],out[0],vrot,superrot)
+    conv_wl,conv_R = conv.rotate( out[1],out[0],vrot,superrot,sigma=1800)
    
     out_final = np.zeros((2,len(conv_R)))
 
@@ -84,5 +85,5 @@ for i in range(len(list_ord)):
         
 #The final data are in nm and cm
 np.savetxt(dire+"lambdas"+name+suffix+".txt",wlen_final)
-np.savetxt(dire+"flux"+name+suffix+".txt",R_final)
+np.savetxt(dire+"Rp"+name+suffix+".txt",R_final)
         
