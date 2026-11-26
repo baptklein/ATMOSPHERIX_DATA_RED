@@ -32,10 +32,10 @@ type_templ = "transmission"
 
 R_unit = "cm"
 R_unit = "none"
-Rs =0.375* 696340000.0 # in solpltar unit
-Ts = 3600.
+Rs =2.2* 696340000.0 # in solpltar unit
+Ts = 9950.
 
-Rp = 0.5485*69911000.0
+Rp = 1.89*69911000.0
 
 lambdas_unit = "micron"
 lambdas_unit = "nano"
@@ -52,17 +52,17 @@ norm = True
 
 Nphase = 1
 #name only needed if Nphase =1
-name ="HD189_transmission"
+name ="KELT9_onlyFe_H-"
 
-# dire = "/home/adminloc/Bureau/Atmospheres/ELT/HIP67522/Models//"
-dire = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/Models/Results/"
+# dire = "/home/florian/Bureau/Atmosphere_SPIRou/ELT/HIP67522/Models//"
+dire = "/home/florian/Bureau/Atmosphere_SPIRou/Models/transmission/Results/"
 
-dire_res = "/home/adminloc/Bureau/Atmospheres/Pipeline_v2//ATMOSPHERIX_DATA_RED/Templates/"
+dire_res = "/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate//ATMOSPHERIX_DATA_RED/Templates/"
 # dire_res = "/home/florian/Bureau/Atmosphere_SPIRou/Models/GL15A/HD189/to-correl/"
 
 #SPIRou
 list_ord = np.arange(31,80)
-wlen_file ="/home/adminloc/Bureau/Atmospheres/Pipeline_v2/ATMOSPHERIX_DATA_RED/wlen.dat"
+wlen_file ="/home/florian/Bureau/Atmosphere_SPIRou/Pipeline_v2/uptodate/ATMOSPHERIX_DATA_RED/wlen.dat"
 
 
 
@@ -88,7 +88,7 @@ wlen = np.loadtxt(wlen_file)
 if lambdas_unit=="micron":
     wavelength = wavelength*1000
 
-dire_resphase =dire_res+name
+dire_resphase =dire_res+name+"_"+type_templ
 
 if norm==False:
     dire_resphase += "_nonorm"
@@ -126,8 +126,8 @@ for i in range(len(list_ord)):
     if broadening:
         conv_wl,conv_planet = conv.rotate( out[1],out[0],0.0,0.0)
         out = np.zeros((2,len(conv_wl)))
-        out[0] = conv_wl
-        out[1] = conv_planet
+        out[0] = conv_wl[::-1]
+        out[1] = conv_planet[::-1]
             
 
     if norm:

@@ -292,7 +292,12 @@ class Order:
         
         return W_sub, I_sub
      
-    def master_out_from_file(self,V_corr,W_ref,I_ref,sig_g,N_bor):      
+    def master_out_from_file(self,V_corr,W_ref,I_ref,sig_g,N_bor,normed=False,N_med =150):
+        
+        #if the spectra are normalized, then the stellar spectrum must be as well
+        if normed ==True:
+            I_ref = (I_ref-np.convolve(I_ref, np.ones(N_med)/N_med, mode='same'))[int(N_med/2):-int(N_med/2)]+1
+            W_ref = W_ref[int(N_med/2):-int(N_med/2)]
         ### If the order is kept - Remove high-SNR out-of-transit reference spectrum    
         ### Start by computing mean spectrum in the stellar rest frame
         I_ref_interp = PchipInterpolator(W_ref[np.isfinite(I_ref)], I_ref[np.isfinite(I_ref)])
@@ -319,19 +324,18 @@ class Order:
             I_sub1[kk] = self.I_cl[kk,2*N_bor:-2*N_bor]/I_fit
             
         ## Then compute reference spectrum in the Geocentric frame
-        # I_med2  = np.median(I_sub1,axis=0) 
-        # I_sub2  = np.zeros(I_sub1.shape)
-        # for kk in range(len(I_sub1)):
-        #     X          = np.array([np.ones(len(I_med2)),I_med2],dtype=float).T
-        #     p,pe       = LS(X,I_sub1[kk])
-        #     Ip         = np.dot(X,p)
-        #     I_sub2[kk] = I_sub1[kk]/Ip    
+        I_med2  = np.median(I_sub1,axis=0) 
+        I_sub2  = np.zeros(I_sub1.shape)
+        for kk in range(len(I_sub1)):
+            X          = np.array([np.ones(len(I_med2)),I_med2],dtype=float).T
+            p,pe       = LS(X,I_sub1[kk])
+            Ip         = np.dot(X,p)
+            I_sub2[kk] = I_sub1[kk]/Ip    
             
             
         ### Remove extremities to avoid interpolation errors
         W_sub = self.W_cl[2*N_bor:-2*N_bor]
-        I_sub = I_sub1
-        
+        I_sub = I_sub2
         return W_sub, I_sub
 
     # -----------------------------------------------------------

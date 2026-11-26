@@ -316,7 +316,7 @@ def reduce(prm_name,name_in,name_out):
 
     if prm.master_from_file:
         W_ref_file = fits.open(prm.master_W_ref_file)
-        W_ref = W_ref_file[0].data
+        W_ref = W_ref_file[1].data
         
         I_ref_file = fits.open(prm.master_I_ref_file)
         I_ref = I_ref_file[1].data
@@ -384,8 +384,13 @@ def reduce(prm_name,name_in,name_out):
             if prm.master_from_file:
                 W_ref_ord = W_ref[nn] 
                 I_ref_ord = I_ref[nn]
-                O.W_sub, O.I_sub = O.master_out_from_file(V_corr,W_ref_ord,
-                                                          I_ref_ord,prm.sig_g,prm.N_bor)
+                if prm.first_norm_type == "simple" or prm.first_norm_type == "old":
+                    O.W_sub, O.I_sub = O.master_out_from_file(vstar+berv,W_ref_ord,
+                                           I_ref_ord,prm.sig_g,prm.N_bor,
+                                           normed=True, N_med = prm.N_med)
+                else:
+                    O.W_sub, O.I_sub = O.master_out_from_file(vstar+berv,W_ref_ord,
+                                           I_ref_ord,prm.sig_g,prm.N_bor)
             else:
                 O.W_sub, O.I_sub = O.master_out(V_corr,n_ini,n_end,prm.sig_g,prm.N_bor)
         else:
@@ -577,7 +582,8 @@ def correlate(prm_name):
 
     #we loop here over the number of observations
     for nobs in range(prm.num_obs):
-        filename = prm.dir_correl_in+prm.correl_name_in[nobs]        
+        filename = prm.dir_correl_in+prm.correl_name_in[nobs]
+        print("Correlating file \n"+prm.correl_name_in[nobs]+"\n with model \n"+prm.dir_correl_mod)        
         #first we read the data
         list_ord,wl,data_tot,phase,window,Stdtot,SNRtot,projtot,F,Vc,berv = corr_func.load_data(filename,prm.select_ord,
                                                                                                 prm.list_ord_correl,prm.dir_correl_mod)
@@ -693,7 +699,7 @@ def correlate(prm_name):
         #save if you want it
         if prm.save_ccf:
             filesave = prm.dir_correl_out+prm.correl_name_out[nobs]
-            savedata = (prm.Kp_array,prm.Vsys_array,list_ord,correl_boucher)
+            savedata = (phase2,window2,prm.Kp_array,prm.Vsys_array,list_ord,correl_boucher)
             with open(filesave, 'wb') as specfile:
                 pickle.dump(savedata,specfile)
             print("DONE")
